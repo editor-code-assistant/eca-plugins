@@ -124,6 +124,12 @@ code {
   padding: 0 24px;
 }
 
+@media (max-width: 380px) {
+  .container {
+    padding: 0 16px;
+  }
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -178,6 +184,36 @@ code {
 @keyframes pulseGlow {
   0%, 100% { box-shadow: 0 0 8px rgba(0, 165, 184, 0.3); }
   50% { box-shadow: 0 0 16px rgba(0, 165, 184, 0.5); }
+}
+
+/* --- Mobile touch & overflow safety --- */
+html {
+  overflow-x: hidden;
+}
+
+body {
+  overscroll-behavior-x: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Minimum touch target for interactive elements */
+@media (pointer: coarse) {
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Let inline links stay natural size */
+  p a,
+  li a,
+  span a {
+    min-height: unset;
+    min-width: unset;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

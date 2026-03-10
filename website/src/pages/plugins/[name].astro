@@ -502,5 +502,46 @@ const configSnippet = `{
     .detail-name {
       font-size: 1.4rem;
     }
+
+    .detail-description {
+      font-size: 0.9rem;
+    }
+
+    .detail-install {
+      padding: 16px;
+    }
+
+    .detail-info {
+      padding: 16px;
+    }
+
+    .detail-code {
+      font-size: 0.75rem;
+      padding: 12px;
+    }
+
+    .detail-readme-content :global(pre) {
+      padding: 12px;
+      font-size: 0.78rem;
+    }
+
+    .detail-readme-content :global(ul),
+    .detail-readme-content :global(ol) {
+      padding-left: 18px;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .detail-name {
+      font-size: 1.25rem;
+    }
+
+    .detail-icon {
+      font-size: 2.5rem;
+    }
+
+    .back-link {
+      margin-bottom: 24px;
+    }
   }
 </style>

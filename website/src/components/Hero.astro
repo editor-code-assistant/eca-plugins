@@ -271,7 +271,7 @@ const { pluginCount } = Astro.props;
 
   @media (max-width: 640px) {
     .hero {
-      padding: 56px 0 36px;
+      padding: 48px 0 32px;
     }
 
     .hero-title {
@@ -280,10 +280,44 @@ const { pluginCount } = Astro.props;
 
     .hero-subtitle {
       font-size: 0.95rem;
+      margin-bottom: 28px;
+    }
+
+    .hero-search-input {
+      padding: 13px 18px 13px 46px;
+      font-size: 0.95rem;
+    }
+
+    .hero-search-icon {
+      left: 16px;
+    }
+
+    /* Kbd hint is useless on touch devices */
+    .hero-search-kbd {
+      display: none;
+    }
+
+    .hero-badge {
+      margin-bottom: 20px;
     }
 
     .hero-contribute {
       font-size: 0.8rem;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .hero {
+      padding: 40px 0 28px;
+    }
+
+    .hero-title {
+      font-size: 1.55rem;
+    }
+
+    .hero-subtitle {
+      font-size: 0.88rem;
+      margin-bottom: 24px;
     }
   }
 </style>

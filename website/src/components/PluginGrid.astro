@@ -183,7 +183,7 @@ const categories = ['All', ...new Set(plugins.map(p => p.category))];
 
   .plugin-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
     gap: 20px;
   }
 
@@ -213,11 +213,40 @@ const categories = ['All', ...new Set(plugins.map(p => p.category))];
   @media (max-width: 720px) {
     .plugin-grid {
       grid-template-columns: 1fr;
+      gap: 16px;
     }
 
     .grid-controls {
       flex-direction: column;
-      align-items: flex-start;
+      align-items: stretch;
+      gap: 12px;
+    }
+
+    .filter-bar {
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 4px;
+      max-width: 100%;
+    }
+
+    .filter-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .filter-pill {
+      flex-shrink: 0;
+    }
+
+    .grid-count {
+      font-size: 0.8rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .grid-section {
+      padding: 0 0 56px;
     }
   }
 </style>

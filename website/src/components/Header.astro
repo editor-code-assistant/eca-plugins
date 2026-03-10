@@ -156,9 +156,9 @@ import { REPO_URL, DOCS_URL, SITE_URL } from '../constants';
     border-color: rgba(0, 165, 184, 0.5);
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 768px) {
     .header-nav {
-      gap: 12px;
+      gap: 10px;
     }
 
     .header-link span,
@@ -167,16 +167,37 @@ import { REPO_URL, DOCS_URL, SITE_URL } from '../constants';
     }
 
     .header-link--submit {
-      padding: 5px 8px;
-    }
-
-    .header-link--submit span {
       display: none;
     }
 
     .header-link--cta {
-      padding: 5px 10px;
       font-size: 0.8rem;
+      padding: 5px 10px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .header-inner {
+      padding: 0 16px;
+    }
+
+    .header-brand {
+      gap: 8px;
+      font-size: 0.95rem;
+    }
+
+    .header-nav {
+      gap: 6px;
+    }
+
+    /* Hide "How plugins work" entirely — no icon fallback */
+    .header-link:not(.header-link--submit):not(.header-link--cta):not([href*="github"]) {
+      display: none;
+    }
+
+    .header-link--cta {
+      padding: 5px 8px;
+      font-size: 0.75rem;
     }
   }
 </style>
