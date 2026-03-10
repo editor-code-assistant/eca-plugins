@@ -1,0 +1,177 @@
+---
+interface Props {
+  pluginCount: number;
+}
+
+const { pluginCount } = Astro.props;
+---
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content container">
+    <div class="hero-badge">
+      <span class="hero-badge-dot"></span>
+      {pluginCount} plugins available
+    </div>
+    <h1 class="hero-title">
+      Extend ECA with
+      <span class="hero-highlight">community plugins</span>
+    </h1>
+    <p class="hero-subtitle">
+      Browse, discover, and install plugins that add skills, agents, rules, and more to your editor AI assistant.
+    </p>
+    <div class="hero-search">
+      <svg class="hero-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input
+        type="text"
+        id="search-input"
+        class="hero-search-input"
+        placeholder="Search plugins..."
+        autocomplete="off"
+        autofocus
+      />
+      <kbd class="hero-search-kbd">/</kbd>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding: 80px 0 48px;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 0%, rgba(0, 122, 148, 0.15) 0%, transparent 100%),
+      radial-gradient(ellipse 40% 40% at 80% 20%, rgba(0, 165, 184, 0.08) 0%, transparent 100%);
+    pointer-events: none;
+  }
+
+  .hero-content {
+    position: relative;
+    text-align: center;
+    max-width: 720px;
+    animation: fadeIn 0.5s ease;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--color-primary-light);
+    background: rgba(0, 165, 184, 0.1);
+    border: 1px solid rgba(0, 165, 184, 0.2);
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
+    margin-bottom: 24px;
+  }
+
+  .hero-badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-accent-green);
+    box-shadow: 0 0 6px var(--color-accent-green);
+  }
+
+  .hero-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+    color: var(--color-text-primary);
+  }
+
+  .hero-highlight {
+    background: var(--color-brand-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-subtitle {
+    font-size: 1.1rem;
+    color: var(--color-text-secondary);
+    max-width: 540px;
+    margin: 0 auto 32px;
+    line-height: 1.6;
+  }
+
+  .hero-search {
+    position: relative;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .hero-search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-muted);
+    pointer-events: none;
+  }
+
+  .hero-search-input {
+    width: 100%;
+    padding: 14px 48px 14px 48px;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    color: var(--color-text-primary);
+    background: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    outline: none;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  }
+
+  .hero-search-input::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  .hero-search-input:focus {
+    border-color: var(--color-primary-light);
+    box-shadow: 0 0 0 3px rgba(0, 165, 184, 0.15);
+  }
+
+  .hero-search-kbd {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    pointer-events: none;
+    line-height: 1.4;
+  }
+
+  @media (max-width: 640px) {
+    .hero {
+      padding: 48px 0 32px;
+    }
+
+    .hero-title {
+      font-size: 1.8rem;
+    }
+
+    .hero-subtitle {
+      font-size: 1rem;
+    }
+  }
+</style>

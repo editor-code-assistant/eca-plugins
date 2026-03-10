@@ -1,0 +1,46 @@
+---
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkRehype from 'remark-rehype';
+import rehypeStringify from 'rehype-stringify';
+import fs from 'node:fs';
+import path from 'node:path';
+
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Hero from '../components/Hero.astro';
+import PluginGrid from '../components/PluginGrid.astro';
+import PluginModal from '../components/PluginModal.astro';
+import Footer from '../components/Footer.astro';
+
+import '../styles/global.css';
+
+import marketplace from '../../../.eca-plugin/marketplace.json';
+
+const plugins = marketplace.plugins;
+
+const processor = unified()
+  .use(remarkParse)
+  .use(remarkRehype)
+  .use(rehypeStringify);
+
+const readmeMap: Record<string, string> = {};
+for (const plugin of plugins) {
+  const readmePath = path.resolve('..', plugin.source, 'README.md');
+  if (fs.existsSync(readmePath)) {
+    const md = fs.readFileSync(readmePath, 'utf-8');
+    const result = await processor.process(md);
+    readmeMap[plugin.name] = String(result);
+  }
+}
+---
+
+<Layout>
+  <Header />
+  <main>
+    <Hero pluginCount={plugins.length} />
+    <PluginGrid plugins={plugins} readmeMap={readmeMap} />
+    <PluginModal />
+  </main>
+  <Footer />
+</Layout>

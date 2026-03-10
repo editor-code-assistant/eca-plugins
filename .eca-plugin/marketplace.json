@@ -1,0 +1,44 @@
+{
+  "plugins": [
+    {
+      "name": "clojure-review",
+      "description": "Principal Clojure(Script) code reviewer subagent with structured feedback on design, state management, idioms, and testing",
+      "source": "plugins/clojure-review",
+      "category": "Development",
+      "tags": ["clojure", "review", "subagent", "quality"],
+      "author": "zikajk",
+      "icon": "🔍",
+      "featured": true
+    },
+    {
+      "name": "fp-style",
+      "description": "Coding style skill enforcing functional-leaning, idiomatic conventions with lightweight data structures across any language",
+      "source": "plugins/fp-style",
+      "category": "Development",
+      "tags": ["style", "functional", "skill", "conventions"],
+      "author": "davidvujic",
+      "icon": "λ",
+      "featured": true
+    },
+    {
+      "name": "agent-orchestration",
+      "description": "Subagent-based workflow for implementing planned changes with consistent, functional-leaning coding style",
+      "source": "plugins/agent-orchestration",
+      "category": "Workflow",
+      "tags": ["subagent", "implementation", "orchestration", "refactoring"],
+      "author": "davidvujic",
+      "icon": "🎭",
+      "featured": true
+    },
+    {
+      "name": "notify-hooks",
+      "description": "Desktop sound notifications when ECA finishes responding or needs tool call approval",
+      "source": "plugins/notify-hooks",
+      "category": "Productivity",
+      "tags": ["hooks", "notifications", "sound", "desktop"],
+      "author": "ericdallo",
+      "icon": "🔔",
+      "featured": false
+    }
+  ]
+}

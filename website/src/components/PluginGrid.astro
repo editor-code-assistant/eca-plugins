@@ -1,0 +1,285 @@
+---
+import PluginCard from './PluginCard.astro';
+
+interface Plugin {
+  name: string;
+  description: string;
+  source: string;
+  category: string;
+  tags: string[];
+  author: string;
+  icon: string;
+  featured?: boolean;
+}
+
+interface Props {
+  plugins: Plugin[];
+  readmeMap?: Record<string, string>;
+}
+
+const { plugins, readmeMap = {} } = Astro.props;
+
+const categories = ['All', ...new Set(plugins.map(p => p.category))];
+const featured = plugins.filter(p => p.featured);
+const rest = plugins.filter(p => !p.featured);
+const sorted = [...featured, ...rest];
+---
+
+<section class="grid-section">
+  <div class="container">
+    <div class="grid-controls">
+      <div class="filter-bar" role="tablist" aria-label="Filter by category">
+        {categories.map((cat, i) => (
+          <button
+            class:list={['filter-pill', { 'filter-pill--active': i === 0 }]}
+            data-category={cat}
+            role="tab"
+            aria-selected={i === 0 ? 'true' : 'false'}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+      <div class="grid-count">
+        <span id="visible-count">{plugins.length}</span> plugin{plugins.length !== 1 ? 's' : ''}
+      </div>
+    </div>
+
+    <div class="plugin-grid" id="plugin-grid">
+      {sorted.map(plugin => (
+        <PluginCard
+          name={plugin.name}
+          description={plugin.description}
+          category={plugin.category}
+          tags={plugin.tags}
+          author={plugin.author}
+          icon={plugin.icon}
+          featured={plugin.featured}
+        />
+      ))}
+    </div>
+
+    <div class="grid-empty" id="grid-empty" hidden>
+      <div class="grid-empty-icon">🔍</div>
+      <p class="grid-empty-title">No plugins found</p>
+      <p class="grid-empty-text">Try a different search term or category</p>
+    </div>
+
+    {Object.entries(readmeMap).map(([name, html]) => (
+      <template data-readme={name}>
+        <Fragment set:html={html} />
+      </template>
+    ))}
+  </div>
+</section>
+
+<script>
+  const searchInput = document.getElementById('search-input') as HTMLInputElement;
+  const grid = document.getElementById('plugin-grid')!;
+  const cards = grid.querySelectorAll<HTMLElement>('.plugin-card');
+  const pills = document.querySelectorAll<HTMLButtonElement>('.filter-pill');
+  const countEl = document.getElementById('visible-count')!;
+  const emptyEl = document.getElementById('grid-empty')!;
+
+  let activeCategory = 'All';
+
+  function filterCards() {
+    const query = searchInput?.value.toLowerCase().trim() ?? '';
+    let visible = 0;
+
+    cards.forEach(card => {
+      const name = card.dataset.name?.toLowerCase() ?? '';
+      const desc = card.dataset.description?.toLowerCase() ?? '';
+      const cat = card.dataset.category ?? '';
+      const tags = card.dataset.tags?.toLowerCase() ?? '';
+
+      const matchesSearch = !query
+        || name.includes(query)
+        || desc.includes(query)
+        || tags.includes(query);
+      const matchesCategory = activeCategory === 'All' || cat === activeCategory;
+      const show = matchesSearch && matchesCategory;
+
+      card.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+
+    countEl.textContent = String(visible);
+    emptyEl.hidden = visible > 0;
+  }
+
+  searchInput?.addEventListener('input', filterCards);
+
+  pills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      pills.forEach(p => {
+        p.classList.remove('filter-pill--active');
+        p.setAttribute('aria-selected', 'false');
+      });
+      pill.classList.add('filter-pill--active');
+      pill.setAttribute('aria-selected', 'true');
+      activeCategory = pill.dataset.category ?? 'All';
+      filterCards();
+    });
+  });
+
+  // Focus search on "/" key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement !== searchInput) {
+      e.preventDefault();
+      searchInput?.focus();
+    }
+    if (e.key === 'Escape' && document.activeElement === searchInput) {
+      searchInput.value = '';
+      searchInput.blur();
+      filterCards();
+    }
+  });
+
+  // Open modal on card click/enter
+  grid.addEventListener('click', (e) => {
+    const card = (e.target as HTMLElement).closest('.plugin-card') as HTMLElement | null;
+    if (card) openModal(card);
+  });
+
+  grid.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const card = (e.target as HTMLElement).closest('.plugin-card') as HTMLElement | null;
+      if (card) openModal(card);
+    }
+  });
+
+  function openModal(card: HTMLElement) {
+    const modal = document.getElementById('plugin-modal')!;
+    const name = card.dataset.name ?? '';
+    const description = card.dataset.description ?? '';
+    const category = card.dataset.category ?? '';
+    const tags = card.dataset.tags ?? '';
+    const author = card.dataset.author ?? '';
+
+    modal.querySelector('[data-modal-name]')!.textContent = name;
+    modal.querySelector('[data-modal-description]')!.textContent = description;
+    modal.querySelector('[data-modal-category]')!.textContent = category;
+    modal.querySelector('[data-modal-author]')!.textContent = author;
+
+    const tagsContainer = modal.querySelector('[data-modal-tags]')!;
+    tagsContainer.innerHTML = tags.split(',').filter(Boolean)
+      .map(t => `<span class="modal-tag">${t}</span>`).join('');
+
+    const configSnippet = `{
+  "plugins": {
+    "install": ["${name}"]
+  }
+}`;
+    modal.querySelector('[data-modal-config]')!.textContent = configSnippet;
+
+    const readmeSection = modal.querySelector('[data-modal-readme]') as HTMLElement;
+    const readmeTemplate = document.querySelector('template[data-readme="' + name + '"]') as HTMLTemplateElement | null;
+    if (readmeTemplate && readmeSection) {
+      readmeSection.innerHTML = readmeTemplate.innerHTML;
+      readmeSection.parentElement!.hidden = false;
+    } else if (readmeSection) {
+      readmeSection.innerHTML = '';
+      readmeSection.parentElement!.hidden = true;
+    }
+
+    modal.classList.add('modal--open');
+    document.body.style.overflow = 'hidden';
+    modal.querySelector('.modal-content')!.scrollTop = 0;
+    (modal.querySelector('.modal-close') as HTMLElement)?.focus();
+  }
+</script>
+
+<style>
+  .grid-section {
+    padding: 0 0 80px;
+  }
+
+  .grid-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .filter-bar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .filter-pill {
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    padding: 7px 16px;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition:
+      color var(--transition-fast),
+      background var(--transition-fast),
+      border-color var(--transition-fast);
+  }
+
+  .filter-pill:hover {
+    color: var(--color-text-primary);
+    border-color: var(--color-border-hover);
+  }
+
+  .filter-pill--active {
+    color: white;
+    background: var(--color-brand-gradient);
+    border-color: transparent;
+  }
+
+  .grid-count {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+
+  .plugin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+
+  .grid-empty {
+    text-align: center;
+    padding: 80px 24px;
+  }
+
+  .grid-empty-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+
+  .grid-empty-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 8px;
+  }
+
+  .grid-empty-text {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+  }
+
+  @media (max-width: 720px) {
+    .plugin-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .grid-controls {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>

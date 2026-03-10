@@ -1,0 +1,420 @@
+---
+---
+
+<div class="modal-overlay" id="plugin-modal" role="dialog" aria-modal="true" aria-label="Plugin details">
+  <div class="modal-backdrop"></div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-name" data-modal-name></h2>
+      <button class="modal-close" aria-label="Close modal">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <p class="modal-description" data-modal-description></p>
+
+      <div class="modal-meta">
+        <div class="modal-meta-item">
+          <span class="modal-meta-label">Category</span>
+          <span class="modal-meta-value" data-modal-category></span>
+        </div>
+        <div class="modal-meta-item">
+          <span class="modal-meta-label">Author</span>
+          <span class="modal-meta-value" data-modal-author></span>
+        </div>
+      </div>
+
+      <div class="modal-tags" data-modal-tags></div>
+
+      <div class="modal-readme-section" hidden>
+        <div class="modal-readme-divider"></div>
+        <div class="modal-readme-content" data-modal-readme></div>
+      </div>
+
+      <div class="modal-install">
+        <div class="modal-install-header">
+          <h3 class="modal-install-title">Install</h3>
+          <button class="modal-copy-btn" aria-label="Copy config to clipboard">
+            <svg class="modal-copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <svg class="modal-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden>
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span class="modal-copy-text">Copy</span>
+          </button>
+        </div>
+        <p class="modal-install-hint">
+          Add this to your <code>config.json</code> (global or project-level):
+        </p>
+        <pre class="modal-code"><code data-modal-config></code></pre>
+        <p class="modal-install-alt">
+          Or install interactively with <code>/plugin-install</code> inside ECA.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const modal = document.getElementById('plugin-modal')!;
+  const backdrop = modal.querySelector('.modal-backdrop')!;
+  const closeBtn = modal.querySelector('.modal-close')!;
+  const copyBtn = modal.querySelector('.modal-copy-btn')!;
+  const copyIcon = modal.querySelector('.modal-copy-icon')!;
+  const checkIcon = modal.querySelector('.modal-check-icon')!;
+  const copyText = modal.querySelector('.modal-copy-text')!;
+  const configEl = modal.querySelector('[data-modal-config]')!;
+
+  function closeModal() {
+    modal.classList.remove('modal--open');
+    document.body.style.overflow = '';
+  }
+
+  backdrop.addEventListener('click', closeModal);
+  closeBtn.addEventListener('click', closeModal);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('modal--open')) {
+      closeModal();
+    }
+  });
+
+  copyBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(configEl.textContent ?? '');
+      copyIcon.setAttribute('hidden', '');
+      checkIcon.removeAttribute('hidden');
+      copyText.textContent = 'Copied!';
+
+      setTimeout(() => {
+        copyIcon.removeAttribute('hidden');
+        checkIcon.setAttribute('hidden', '');
+        copyText.textContent = 'Copy';
+      }, 2000);
+    } catch {
+      // Fallback — select text
+      const range = document.createRange();
+      range.selectNodeContents(configEl);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    }
+  });
+</script>
+
+<style>
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition-normal), visibility var(--transition-normal);
+  }
+
+  .modal-overlay.modal--open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-content {
+    position: relative;
+    width: 100%;
+    max-width: 560px;
+    max-height: 80vh;
+    overflow-y: auto;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(10px);
+    transition: transform var(--transition-normal);
+  }
+
+  .modal--open .modal-content {
+    transform: translateY(0);
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 24px 0;
+  }
+
+  .modal-name {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    letter-spacing: -0.01em;
+  }
+
+  .modal-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: color var(--transition-fast), border-color var(--transition-fast);
+    flex-shrink: 0;
+  }
+
+  .modal-close:hover {
+    color: var(--color-text-primary);
+    border-color: var(--color-border-hover);
+  }
+
+  .modal-body {
+    padding: 20px 24px 24px;
+  }
+
+  .modal-description {
+    font-size: 0.95rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+
+  .modal-meta {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 16px;
+  }
+
+  .modal-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .modal-meta-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+  }
+
+  .modal-meta-value {
+    font-size: 0.9rem;
+    color: var(--color-text-primary);
+    font-weight: 500;
+  }
+
+  .modal-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+
+  :global(.modal-tag) {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-surface);
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--color-border);
+  }
+
+  .modal-readme-section {
+    margin-bottom: 24px;
+  }
+
+  .modal-readme-divider {
+    height: 1px;
+    background: var(--color-border);
+    margin-bottom: 20px;
+  }
+
+  .modal-readme-content {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+  }
+
+  .modal-readme-content :global(h1) {
+    display: none;
+  }
+
+  .modal-readme-content :global(h2) {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 20px 0 8px;
+  }
+
+  .modal-readme-content :global(h3) {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 16px 0 6px;
+  }
+
+  .modal-readme-content :global(p) {
+    margin: 0 0 12px;
+  }
+
+  .modal-readme-content :global(ul),
+  .modal-readme-content :global(ol) {
+    margin: 0 0 12px;
+    padding-left: 20px;
+  }
+
+  .modal-readme-content :global(li) {
+    margin-bottom: 4px;
+  }
+
+  .modal-readme-content :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.8em;
+    background: var(--color-bg-surface);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    color: var(--color-accent-blue);
+  }
+
+  .modal-readme-content :global(pre) {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    overflow-x: auto;
+    margin: 0 0 12px;
+    line-height: 1.5;
+  }
+
+  .modal-readme-content :global(pre code) {
+    background: none;
+    padding: 0;
+    font-size: inherit;
+  }
+
+  .modal-readme-content :global(strong) {
+    color: var(--color-text-primary);
+    font-weight: 600;
+  }
+
+  .modal-readme-content :global(a) {
+    color: var(--color-primary-light);
+  }
+
+  .modal-readme-content :global(a:hover) {
+    color: #4dc9da;
+  }
+
+  .modal-readme-content :global(blockquote) {
+    border-left: 3px solid var(--color-border-active);
+    margin: 0 0 12px;
+    padding: 8px 14px;
+    color: var(--color-text-muted);
+    background: rgba(0, 165, 184, 0.05);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+
+  .modal-readme-content :global(blockquote p) {
+    margin: 0;
+  }
+
+  .modal-install {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 18px;
+  }
+
+  .modal-install-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .modal-install-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .modal-copy-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-primary-light);
+    background: none;
+    border: 1px solid rgba(0, 165, 184, 0.3);
+    padding: 5px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background var(--transition-fast), border-color var(--transition-fast);
+  }
+
+  .modal-copy-btn:hover {
+    background: rgba(0, 165, 184, 0.1);
+    border-color: rgba(0, 165, 184, 0.5);
+  }
+
+  .modal-install-hint {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    margin-bottom: 10px;
+  }
+
+  .modal-code {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--color-accent-blue);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    overflow-x: auto;
+    white-space: pre;
+    line-height: 1.5;
+    margin-bottom: 10px;
+  }
+
+  .modal-install-alt {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+  }
+
+  @media (max-width: 640px) {
+    .modal-overlay {
+      padding: 12px;
+      align-items: flex-end;
+    }
+
+    .modal-content {
+      max-height: 90vh;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+  }
+</style>
