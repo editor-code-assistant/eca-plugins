@@ -25,6 +25,7 @@ if (fs.existsSync(readmePath)) {
   readmeHtml = await renderMarkdown(md);
 }
 
+const installCommand = `/plugin-install ${plugin.name}`;
 const configSnippet = `{
   "plugins": {
     "install": ["${plugin.name}"]
@@ -77,26 +78,52 @@ const configSnippet = `{
 
         <aside class="detail-sidebar">
           <div class="detail-install">
-            <div class="detail-install-header">
-              <h3 class="detail-install-title">Install</h3>
-              <button class="detail-copy-btn" aria-label="Copy config to clipboard" id="copy-btn">
-                <svg class="detail-copy-icon" id="copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <h3 class="detail-install-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Install
+            </h3>
+
+            <p class="detail-install-hint">Run this command in the ECA chat:</p>
+            <div class="detail-command">
+              <pre class="detail-command-code" id="command-code">{installCommand}</pre>
+              <button class="detail-copy-btn" aria-label="Copy command to clipboard" data-copy="command">
+                <svg class="detail-copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                 </svg>
-                <svg class="detail-check-icon" id="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden>
+                <svg class="detail-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden>
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
-                <span id="copy-text">Copy</span>
               </button>
             </div>
-            <p class="detail-install-hint">
-              Add this to your <code>config.json</code> (global or project-level):
-            </p>
-            <pre class="detail-code"><code id="config-code">{configSnippet}</code></pre>
-            <p class="detail-install-alt">
-              Or install interactively with <code>/plugin-install</code> inside ECA.
-            </p>
+
+            <details class="detail-manual">
+              <summary class="detail-manual-toggle">
+                <svg class="detail-manual-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+                Manual config.json setup
+              </summary>
+              <div class="detail-manual-content">
+                <p class="detail-install-hint">Add to your <code>config.json</code> (global or project-level):</p>
+                <div class="detail-config">
+                  <pre class="detail-code" id="config-code">{configSnippet}</pre>
+                  <button class="detail-copy-btn detail-copy-btn--sm" aria-label="Copy config to clipboard" data-copy="config">
+                    <svg class="detail-copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    <svg class="detail-check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden>
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </details>
           </div>
 
           <div class="detail-info">
@@ -125,31 +152,39 @@ const configSnippet = `{
 </Layout>
 
 <script>
-  const copyBtn = document.getElementById('copy-btn')!;
-  const copyIcon = document.getElementById('copy-icon')!;
-  const checkIcon = document.getElementById('check-icon')!;
-  const copyText = document.getElementById('copy-text')!;
-  const configEl = document.getElementById('config-code')!;
+  const sources: Record<string, string> = {
+    command: document.getElementById('command-code')?.textContent ?? '',
+    config: document.getElementById('config-code')?.textContent ?? '',
+  };
 
-  copyBtn.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(configEl.textContent ?? '');
-      copyIcon.setAttribute('hidden', '');
-      checkIcon.removeAttribute('hidden');
-      copyText.textContent = 'Copied!';
+  document.querySelectorAll<HTMLButtonElement>('.detail-copy-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const key = btn.dataset.copy ?? '';
+      const text = sources[key] ?? '';
+      const copyIcon = btn.querySelector<SVGElement>('.detail-copy-icon')!;
+      const checkIcon = btn.querySelector<SVGElement>('.detail-check-icon')!;
 
-      setTimeout(() => {
-        copyIcon.removeAttribute('hidden');
-        checkIcon.setAttribute('hidden', '');
-        copyText.textContent = 'Copy';
-      }, 2000);
-    } catch {
-      const range = document.createRange();
-      range.selectNodeContents(configEl);
-      const sel = window.getSelection();
-      sel?.removeAllRanges();
-      sel?.addRange(range);
-    }
+      try {
+        await navigator.clipboard.writeText(text);
+        copyIcon.setAttribute('hidden', '');
+        checkIcon.removeAttribute('hidden');
+
+        setTimeout(() => {
+          copyIcon.removeAttribute('hidden');
+          checkIcon.setAttribute('hidden', '');
+        }, 2000);
+      } catch {
+        /* Fallback: select the text */
+        const codeEl = document.getElementById(key === 'command' ? 'command-code' : 'config-code');
+        if (codeEl) {
+          const range = document.createRange();
+          range.selectNodeContents(codeEl);
+          const sel = window.getSelection();
+          sel?.removeAllRanges();
+          sel?.addRange(range);
+        }
+      }
+    });
   });
 </script>
 
@@ -175,9 +210,11 @@ const configSnippet = `{
 
   .detail-layout {
     display: grid;
-    grid-template-columns: 1fr 340px;
+    grid-template-columns: 1fr 420px;
     gap: 40px;
     align-items: start;
+    max-width: 1320px;
+    margin: 0 auto;
   }
 
   .detail-header {
@@ -376,40 +413,22 @@ const configSnippet = `{
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     padding: 20px;
-  }
-
-  .detail-install-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
+    border-top: 2px solid var(--color-primary);
   }
 
   .detail-install-title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--color-text-primary);
-  }
-
-  .detail-copy-btn {
     display: flex;
     align-items: center;
-    gap: 5px;
-    font-family: var(--font-sans);
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--color-primary-light);
-    background: none;
-    border: 1px solid rgba(0, 165, 184, 0.3);
-    padding: 5px 10px;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: background var(--transition-fast), border-color var(--transition-fast);
+    gap: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 14px;
   }
 
-  .detail-copy-btn:hover {
-    background: rgba(0, 165, 184, 0.1);
-    border-color: rgba(0, 165, 184, 0.5);
+  .detail-install-title svg {
+    color: var(--color-primary-light);
+    flex-shrink: 0;
   }
 
   .detail-install-hint {
@@ -418,9 +437,130 @@ const configSnippet = `{
     margin-bottom: 10px;
   }
 
+  /* Primary command block */
+  .detail-command {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-primary-light);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin-bottom: 16px;
+  }
+
+  .detail-command-code {
+    flex: 1;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-primary-hover);
+    white-space: nowrap;
+    overflow-x: auto;
+    line-height: 1.4;
+    margin: 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
+
+  .detail-command-code::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .detail-command-code::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .detail-command-code::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: var(--radius-full);
+  }
+
+  .detail-copy-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--color-text-muted);
+    background: none;
+    border: none;
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: color var(--transition-fast), background var(--transition-fast);
+  }
+
+  .detail-copy-btn:hover {
+    color: var(--color-primary-light);
+    background: rgba(0, 165, 184, 0.1);
+  }
+
+  .detail-copy-btn--sm {
+    padding: 3px;
+  }
+
+  /* Collapsible manual section */
+  .detail-manual {
+    border-top: 1px solid var(--color-border);
+    padding-top: 12px;
+  }
+
+  .detail-manual-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    transition: color var(--transition-fast);
+  }
+
+  .detail-manual-toggle::-webkit-details-marker {
+    display: none;
+  }
+
+  .detail-manual-toggle::marker {
+    content: '';
+  }
+
+  .detail-manual-toggle:hover {
+    color: var(--color-text-secondary);
+  }
+
+  .detail-manual-chevron {
+    flex-shrink: 0;
+    transition: transform var(--transition-fast);
+  }
+
+  .detail-manual[open] .detail-manual-chevron {
+    transform: rotate(90deg);
+  }
+
+  .detail-manual-content {
+    padding-top: 12px;
+  }
+
+  .detail-manual-content .detail-install-hint {
+    font-size: 0.75rem;
+  }
+
+  .detail-config {
+    position: relative;
+  }
+
+  .detail-config .detail-copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }
+
   .detail-code {
     font-family: var(--font-mono);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     color: var(--color-accent-blue);
     background: var(--color-bg-primary);
     border: 1px solid var(--color-border);
@@ -429,12 +569,7 @@ const configSnippet = `{
     overflow-x: auto;
     white-space: pre;
     line-height: 1.5;
-    margin-bottom: 10px;
-  }
-
-  .detail-install-alt {
-    font-size: 0.78rem;
-    color: var(--color-text-muted);
+    margin: 0;
   }
 
   .detail-info {
@@ -511,12 +646,16 @@ const configSnippet = `{
       padding: 16px;
     }
 
+    .detail-command-code {
+      font-size: 0.8rem;
+    }
+
     .detail-info {
       padding: 16px;
     }
 
     .detail-code {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       padding: 12px;
     }
 

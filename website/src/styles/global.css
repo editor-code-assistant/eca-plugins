@@ -22,23 +22,23 @@
   --color-primary-hover: #4dc9da;
 
   /* Backgrounds */
-  --color-bg-primary: #12121e;
-  --color-bg-secondary: #1a1a2e;
-  --color-bg-card: #22223a;
-  --color-bg-card-hover: #2a2a48;
-  --color-bg-surface: #2a2a3e;
-  --color-bg-input: #1a1a2e;
+  --color-bg-primary: #0c1117;
+  --color-bg-secondary: #131a22;
+  --color-bg-card: #182028;
+  --color-bg-card-hover: #1f2a34;
+  --color-bg-surface: #1c252e;
+  --color-bg-input: #131a22;
 
   /* Borders */
-  --color-border: #2a2a3e;
-  --color-border-hover: #3a3a52;
+  --color-border: #1e2a34;
+  --color-border-hover: #2a3844;
   --color-border-active: #00a5b8;
 
   /* Text */
   --color-text-primary: #e0e4ea;
   --color-text-secondary: #8a9ab0;
   --color-text-muted: #5a6a7a;
-  --color-text-inverse: #12121e;
+  --color-text-inverse: #0c1117;
 
   /* Accents */
   --color-accent-pink: #e8709a;

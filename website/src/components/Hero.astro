@@ -14,7 +14,11 @@ const { pluginCount } = Astro.props;
     <div class="hero-glow hero-glow--1"></div>
     <div class="hero-glow hero-glow--2"></div>
     <div class="hero-glow hero-glow--3"></div>
+    <div class="hero-orb hero-orb--1"></div>
+    <div class="hero-orb hero-orb--2"></div>
+    <div class="hero-orb hero-orb--3"></div>
     <div class="hero-grid"></div>
+    <div class="hero-noise"></div>
   </div>
   <div class="hero-content container">
     <div class="hero-badge">
@@ -75,50 +79,144 @@ const { pluginCount } = Astro.props;
   .hero-gradient {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg,
-      #007a94 0%,
-      #006a82 30%,
-      #005268 60%,
-      var(--color-bg-primary) 100%
-    );
-    opacity: 0.35;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(0, 165, 184, 0.18) 0%, transparent 100%),
+      radial-gradient(ellipse 60% 80% at 20% 20%, rgba(0, 82, 104, 0.25) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 70% at 80% 10%, rgba(0, 122, 148, 0.2) 0%, transparent 70%),
+      linear-gradient(180deg,
+        #00a5b8 0%,
+        #007a94 15%,
+        #005268 40%,
+        var(--color-bg-primary) 100%
+      );
+    opacity: 0.5;
   }
 
+  /* Large ambient glows — slow drifting animation */
   .hero-glow--1 {
     position: absolute;
-    top: -20%;
-    left: 30%;
-    width: 50%;
-    height: 80%;
-    background: radial-gradient(ellipse at center, rgba(0, 165, 184, 0.25) 0%, transparent 70%);
+    top: -30%;
+    left: 20%;
+    width: 60%;
+    height: 90%;
+    background: radial-gradient(ellipse at center, rgba(0, 165, 184, 0.22) 0%, transparent 65%);
+    animation: glowDrift1 12s ease-in-out infinite;
   }
 
   .hero-glow--2 {
     position: absolute;
-    top: -10%;
-    right: 10%;
-    width: 40%;
-    height: 60%;
-    background: radial-gradient(ellipse at center, rgba(0, 122, 148, 0.2) 0%, transparent 70%);
+    top: -15%;
+    right: 5%;
+    width: 45%;
+    height: 70%;
+    background: radial-gradient(ellipse at center, rgba(0, 122, 148, 0.18) 0%, transparent 65%);
+    animation: glowDrift2 15s ease-in-out infinite;
   }
 
   .hero-glow--3 {
     position: absolute;
-    bottom: 0;
-    left: 10%;
-    width: 30%;
-    height: 50%;
-    background: radial-gradient(ellipse at center, rgba(0, 165, 184, 0.08) 0%, transparent 70%);
+    bottom: -10%;
+    left: 5%;
+    width: 40%;
+    height: 60%;
+    background: radial-gradient(ellipse at center, rgba(0, 165, 184, 0.1) 0%, transparent 65%);
+    animation: glowDrift3 18s ease-in-out infinite;
   }
 
-  /* Subtle dot grid pattern */
+  /* Floating orbs — animated blurred circles */
+  .hero-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    will-change: transform;
+  }
+
+  .hero-orb--1 {
+    top: 5%;
+    left: 15%;
+    width: 200px;
+    height: 200px;
+    background: rgba(0, 165, 184, 0.15);
+    animation: orbFloat1 20s ease-in-out infinite;
+  }
+
+  .hero-orb--2 {
+    top: 20%;
+    right: 20%;
+    width: 150px;
+    height: 150px;
+    background: rgba(0, 122, 148, 0.12);
+    animation: orbFloat2 25s ease-in-out infinite;
+  }
+
+  .hero-orb--3 {
+    bottom: 15%;
+    left: 50%;
+    width: 180px;
+    height: 180px;
+    background: rgba(0, 165, 184, 0.08);
+    animation: orbFloat3 22s ease-in-out infinite;
+  }
+
+  /* Dot grid with cross-fade lines for a mesh look */
   .hero-grid {
     position: absolute;
     inset: 0;
-    background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-    background-size: 32px 32px;
-    mask-image: radial-gradient(ellipse 60% 60% at 50% 30%, black 20%, transparent 80%);
-    -webkit-mask-image: radial-gradient(ellipse 60% 60% at 50% 30%, black 20%, transparent 80%);
+    background-image:
+      linear-gradient(rgba(0, 165, 184, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 165, 184, 0.04) 1px, transparent 1px),
+      radial-gradient(rgba(0, 165, 184, 0.06) 1px, transparent 1px);
+    background-size: 64px 64px, 64px 64px, 32px 32px;
+    mask-image: radial-gradient(ellipse 70% 55% at 50% 25%, black 10%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 55% at 50% 25%, black 10%, transparent 75%);
+  }
+
+  /* Film grain / noise texture for depth */
+  .hero-noise {
+    position: absolute;
+    inset: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px 256px;
+    mix-blend-mode: overlay;
+  }
+
+  @keyframes glowDrift1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(3%, 5%) scale(1.05); }
+    66% { transform: translate(-2%, -3%) scale(0.97); }
+  }
+
+  @keyframes glowDrift2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(-4%, 3%) scale(1.03); }
+    66% { transform: translate(2%, -4%) scale(0.98); }
+  }
+
+  @keyframes glowDrift3 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(5%, -3%) scale(1.06); }
+  }
+
+  @keyframes orbFloat1 {
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(40px, -20px); }
+    50% { transform: translate(-10px, 30px); }
+    75% { transform: translate(25px, 10px); }
+  }
+
+  @keyframes orbFloat2 {
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(-30px, 15px); }
+    50% { transform: translate(20px, -25px); }
+    75% { transform: translate(-15px, -10px); }
+  }
+
+  @keyframes orbFloat3 {
+    0%, 100% { transform: translate(0, 0); }
+    33% { transform: translate(25px, -35px); }
+    66% { transform: translate(-30px, 15px); }
   }
 
   .hero-fade {
@@ -172,10 +270,17 @@ const { pluginCount } = Astro.props;
   }
 
   .hero-highlight {
-    background: linear-gradient(90deg, #00a5b8, var(--color-primary-hover));
+    background: linear-gradient(90deg, #00a5b8, #4dc9da, #00c8de, #00a5b8);
+    background-size: 300% 100%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    animation: highlightShimmer 6s ease-in-out infinite;
+  }
+
+  @keyframes highlightShimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
   }
 
   .hero-subtitle {
@@ -207,8 +312,8 @@ const { pluginCount } = Astro.props;
     font-family: var(--font-sans);
     font-size: 1rem;
     color: var(--color-text-primary);
-    background: rgba(26, 26, 46, 0.8);
-    border: 1px solid rgba(42, 42, 62, 0.8);
+    background: rgba(19, 26, 34, 0.8);
+    border: 1px solid rgba(30, 42, 52, 0.8);
     border-radius: var(--radius-lg);
     outline: none;
     backdrop-filter: blur(8px);
@@ -222,7 +327,7 @@ const { pluginCount } = Astro.props;
   .hero-search-input:focus {
     border-color: var(--color-primary-light);
     box-shadow: 0 0 0 3px rgba(0, 165, 184, 0.15), var(--shadow-glow);
-    background: rgba(26, 26, 46, 0.95);
+    background: rgba(19, 26, 34, 0.95);
   }
 
   .hero-search-kbd {
@@ -234,8 +339,8 @@ const { pluginCount } = Astro.props;
     font-size: 0.7rem;
     font-weight: 500;
     color: var(--color-text-muted);
-    background: rgba(42, 42, 62, 0.6);
-    border: 1px solid rgba(42, 42, 62, 0.8);
+    background: rgba(30, 42, 52, 0.6);
+    border: 1px solid rgba(30, 42, 52, 0.8);
     padding: 3px 8px;
     border-radius: var(--radius-sm);
     pointer-events: none;
@@ -306,6 +411,11 @@ const { pluginCount } = Astro.props;
     }
   }
 
+  @media (max-width: 640px) {
+    .hero-orb { display: none; }
+    .hero-noise { display: none; }
+  }
+
   @media (max-width: 380px) {
     .hero {
       padding: 40px 0 28px;
@@ -318,6 +428,18 @@ const { pluginCount } = Astro.props;
     .hero-subtitle {
       font-size: 0.88rem;
       margin-bottom: 24px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-glow--1,
+    .hero-glow--2,
+    .hero-glow--3,
+    .hero-orb--1,
+    .hero-orb--2,
+    .hero-orb--3,
+    .hero-highlight {
+      animation: none;
     }
   }
 </style>
