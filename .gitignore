@@ -5,6 +5,9 @@ node_modules/
 website/dist/
 dist/
 
+# Astro generated
+website/.astro/
+
 # Environment
 .env
 .env.*
