@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 TIMER_FILE="/tmp/eca-pomodoro-start"
 

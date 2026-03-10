@@ -65,7 +65,7 @@ Add an entry to `.eca-plugin/marketplace.json`:
 | `name` | Yes | Unique plugin identifier (kebab-case) |
 | `description` | Yes | Short description (one sentence) |
 | `source` | Yes | Path to the plugin directory (relative to repo root) |
-| `category` | Yes | One of: `Development`, `Productivity`, `Documentation`, `DevOps`, `Data`, `Design` |
+| `category` | Yes | One of: `Development`, `Productivity`, `Workflow`, `Security`, `Documentation`, `DevOps` |
 | `tags` | Yes | Array of relevant tags for search/filtering |
 | `author` | Yes | Author name or organization |
 | `icon` | No | Emoji icon for the plugin card |
@@ -81,6 +81,13 @@ Submit a PR with your plugin. We'll review it for:
 - **Documentation** — Is the README clear and helpful?
 
 ## Guidelines
+
+### Hook scripts
+
+- **Namespace hook keys** with `<plugin-name>.<hook-name>` (e.g., `secret-guard.scan`, `pomodoro.check`). This avoids collisions when multiple plugins are installed.
+- Hook scripts that need to parse JSON should use [`jq`](https://jqlang.github.io/jq/), which is expected as a runtime dependency. If your hook relies on `jq`, check for its availability at the start and degrade gracefully with a clear error message if it's missing.
+
+### General
 
 - Keep plugin names short and descriptive (kebab-case)
 - Write clear, concise skill/agent prompts

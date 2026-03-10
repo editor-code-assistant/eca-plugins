@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ECA Plugin Marketplace",
+  "description": "Schema for .eca-plugin/marketplace.json plugin registry",
+  "type": "object",
+  "required": ["plugins"],
+  "additionalProperties": false,
+  "properties": {
+    "plugins": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "description", "source", "category", "author", "icon"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "description": "Unique kebab-case plugin identifier"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 10,
+            "description": "One-sentence plugin description"
+          },
+          "source": {
+            "type": "string",
+            "pattern": "^plugins/",
+            "description": "Relative path to the plugin directory"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["Development", "Productivity", "Workflow", "Security", "Documentation", "DevOps"],
+            "description": "Plugin category"
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+            "minItems": 1,
+            "description": "Searchable tags"
+          },
+          "author": {
+            "type": "string",
+            "minLength": 1,
+            "description": "GitHub username of the plugin author"
+          },
+          "icon": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Emoji icon for marketplace display"
+          },
+          "featured": {
+            "type": "boolean",
+            "description": "Whether the plugin is featured in the marketplace"
+          }
+        }
+      }
+    }
+  }
+}

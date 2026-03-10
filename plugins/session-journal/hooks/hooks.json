@@ -1,5 +1,5 @@
 {
-  "journal-start": {
+  "session-journal.start": {
     "type": "chatStart",
     "visible": false,
     "actions": [
@@ -9,7 +9,7 @@
       }
     ]
   },
-  "journal-end": {
+  "session-journal.end": {
     "type": "chatEnd",
     "visible": false,
     "actions": [

@@ -1,5 +1,5 @@
 {
-  "notify-finished": {
+  "notify-hooks.finished": {
     "type": "postRequest",
     "visible": false,
     "actions": [
@@ -9,7 +9,7 @@
       }
     ]
   },
-  "notify-approval": {
+  "notify-hooks.approval": {
     "type": "preToolCall",
     "visible": false,
     "actions": [

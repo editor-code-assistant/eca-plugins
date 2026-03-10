@@ -11,5 +11,5 @@ export function githubAvatarUrl(author: string, size: number): string {
 
 /** GitHub URL to the source directory of a plugin. */
 export function pluginSourceUrl(source: string): string {
-  return `${REPO_URL}/tree/main/${source}`;
+  return `${REPO_URL}/tree/master/${source}`;
 }

@@ -1,0 +1,50 @@
+name: Validate Plugins
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate marketplace.json against schema
+        uses: cardinalby/schema-validator-action@v3
+        with:
+          file: .eca-plugin/marketplace.json
+          schema: .eca-plugin/marketplace.schema.json
+
+      - name: Check plugin directories exist
+        run: |
+          jq -r '.plugins[].source' .eca-plugin/marketplace.json | while read -r dir; do
+            if [ ! -d "$dir" ]; then
+              echo "::error::Plugin directory not found: $dir"
+              exit 1
+            fi
+            if [ ! -f "$dir/README.md" ]; then
+              echo "::warning::Missing README.md in $dir"
+            fi
+          done
+
+      - name: Validate hook key naming convention
+        run: |
+          failed=0
+          for hooks_file in $(find plugins -path '*/hooks/hooks.json'); do
+            plugin_name=$(echo "$hooks_file" | cut -d'/' -f2)
+            for key in $(jq -r 'keys[]' "$hooks_file"); do
+              if [[ "$key" != "$plugin_name."* ]]; then
+                echo "::error::Hook key '$key' in $hooks_file must be namespaced as '$plugin_name.<hook-name>'"
+                failed=1
+              fi
+            done
+          done
+          exit $failed
+
+      - name: Shellcheck hook scripts
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: plugins
+          additional_files: "*.sh"
+          severity: warning

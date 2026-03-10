@@ -4,6 +4,10 @@ The official plugin marketplace for [ECA](https://eca.dev) — browse, discover,
 
 **🌐 [plugins.eca.dev](https://plugins.eca.dev)**
 
+## Requirements
+
+Some hook-based plugins (e.g., `secret-guard`, `notify-hooks`, `session-journal`) require [`jq`](https://jqlang.github.io/jq/) to be installed and available on your `PATH`.
+
 ## What is this?
 
 This repository serves two purposes:

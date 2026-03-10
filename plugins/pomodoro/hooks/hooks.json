@@ -1,5 +1,5 @@
 {
-  "pomodoro-start": {
+  "pomodoro.start": {
     "type": "chatStart",
     "visible": false,
     "actions": [
@@ -9,7 +9,7 @@
       }
     ]
   },
-  "pomodoro-check": {
+  "pomodoro.check": {
     "type": "postRequest",
     "visible": true,
     "actions": [

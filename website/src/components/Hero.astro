@@ -1,4 +1,6 @@
 ---
+import { REPO_URL } from '../constants';
+
 interface Props {
   pluginCount: number;
 }
@@ -42,6 +44,16 @@ const { pluginCount } = Astro.props;
       />
       <kbd class="hero-search-kbd">/</kbd>
     </div>
+    <p class="hero-contribute">
+      Have a plugin idea?
+      <a href={`${REPO_URL}/blob/master/CONTRIBUTING.md`} class="hero-contribute-link" target="_blank" rel="noopener">
+        Share it with the community
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </p>
   </div>
   <div class="hero-fade"></div>
 </section>
@@ -230,6 +242,33 @@ const { pluginCount } = Astro.props;
     line-height: 1.3;
   }
 
+  .hero-contribute {
+    margin-top: 20px;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+  }
+
+  .hero-contribute-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-accent-green, #34d399);
+    font-weight: 500;
+    transition: color var(--transition-fast);
+  }
+
+  .hero-contribute-link:hover {
+    color: #6ee7b7;
+  }
+
+  .hero-contribute-link svg {
+    transition: transform var(--transition-fast);
+  }
+
+  .hero-contribute-link:hover svg {
+    transform: translateX(3px);
+  }
+
   @media (max-width: 640px) {
     .hero {
       padding: 56px 0 36px;
@@ -241,6 +280,10 @@ const { pluginCount } = Astro.props;
 
     .hero-subtitle {
       font-size: 0.95rem;
+    }
+
+    .hero-contribute {
+      font-size: 0.8rem;
     }
   }
 </style>

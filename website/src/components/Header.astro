@@ -23,6 +23,13 @@ import { REPO_URL, DOCS_URL, SITE_URL } from '../constants';
         </svg>
         GitHub
       </a>
+      <a href={`${REPO_URL}/blob/master/CONTRIBUTING.md`} class="header-link header-link--submit" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Submit Plugin</span>
+      </a>
       <a href={SITE_URL} class="header-link header-link--cta" target="_blank" rel="noopener">
         eca.dev →
       </a>
@@ -119,6 +126,21 @@ import { REPO_URL, DOCS_URL, SITE_URL } from '../constants';
     color: var(--color-text-primary);
   }
 
+  .header-link--submit {
+    color: var(--color-accent-green, #34d399);
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
+    border: 1px solid rgba(52, 211, 153, 0.25);
+    transition: all var(--transition-fast);
+  }
+
+  .header-link--submit:hover {
+    color: #fff;
+    background: rgba(52, 211, 153, 0.1);
+    border-color: rgba(52, 211, 153, 0.45);
+  }
+
   .header-link--cta {
     color: var(--color-primary-light);
     font-weight: 500;
@@ -141,6 +163,14 @@ import { REPO_URL, DOCS_URL, SITE_URL } from '../constants';
 
     .header-link span,
     .header-badge {
+      display: none;
+    }
+
+    .header-link--submit {
+      padding: 5px 8px;
+    }
+
+    .header-link--submit span {
       display: none;
     }
 

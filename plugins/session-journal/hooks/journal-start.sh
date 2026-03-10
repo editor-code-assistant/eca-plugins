@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 JOURNAL_DIR="${ECA_JOURNAL_DIR:-$HOME/.eca/journal}"
 mkdir -p "$JOURNAL_DIR"
