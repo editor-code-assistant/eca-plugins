@@ -1,7 +1,6 @@
 // ---- External URLs (single source of truth) ----
 
 export const REPO_URL = 'https://github.com/editor-code-assistant/eca-plugins';
-export const DOCS_URL = 'https://docs.eca.dev';
 export const SITE_URL = 'https://eca.dev';
 
 /** GitHub avatar URL for a given user and pixel size. */
