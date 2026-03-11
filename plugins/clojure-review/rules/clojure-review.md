@@ -1,1 +1,1 @@
-When the user asks for a Clojure code review, diff review, or PR review on a Clojure(Script) project, use the `reviewer` subagent.
+When the user asks to review Clojure or ClojureScript code, a diff, or a PR, use the `reviewer` subagent. Review exactly the scope the user provides. If no scope is specified, use the most obvious available review unit.
