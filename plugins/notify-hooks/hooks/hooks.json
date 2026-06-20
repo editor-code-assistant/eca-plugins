@@ -5,7 +5,7 @@
     "actions": [
       {
         "type": "shell",
-        "shell": "jq -e '.hook_type == \"postRequest\"' > /dev/null && (canberra-gtk-play -i complete 2>/dev/null || afplay /System/Library/Sounds/Glass.aiff 2>/dev/null || true)"
+        "shell": "jq -e 'has(\"parent_chat_id\") | not' > /dev/null && (canberra-gtk-play -i complete 2>/dev/null || afplay /System/Library/Sounds/Glass.aiff 2>/dev/null || true)"
       }
     ]
   },
