@@ -85,10 +85,10 @@ The `allium` rule is path-scoped — it's automatically fetched when you work wi
 This plugin was ported from the upstream Allium repository. For reproducibility and auditing, the last upstream commit used as a reference for this port is recorded below:
 
 - Repository: [juxt/allium](https://github.com/juxt/allium)
-- Commit: `82da292e989d518f79189fdfef4446d0d517c277`
-- Author: Henry Garner
-- Date: 2026-04-24 15:40:26 +0100
-- Message: Simplify CLI section in README
+- Commit: `8af2da4e557560277b6621e09785b63f5c262fb9`
+- Author: yavorpanayotov
+- Date: 2026-06-19 17:59:41 +0300
+- Message: Bump plugin version to 3.4.0 (#50)
 
 If you update the plugin from upstream in future, please update this section with the new commit hash and date.
 
