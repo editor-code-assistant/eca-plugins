@@ -14,19 +14,7 @@ The plugin works without the CLI, but automatic validation and analysis require 
 
 ## First steps
 
-Start with `/allium` if you are not sure which workflow you need. It gives ECA the Allium syntax summary and routes you toward the right skill.
-
-If you are designing a new feature, start with `/allium:elicit`. ECA will ask structured questions about the boundary, actors, lifecycle states, triggers, edge cases, and open questions, then help turn the answers into a `.allium` specification.
-
-If you already have code and want to capture what it does, use `/allium:distill`. ECA will inspect the implementation, separate domain behaviour from implementation details, and draft a behavioural spec that can be reviewed and refined.
-
-Once a spec exists, use `/allium:tend` for targeted changes, `/allium:weed` to compare the spec with the implementation, and `/allium:propagate` to turn the spec into test obligations or concrete tests.
-
-What to expect: Allium does not replace implementation or tests. It gives ECA a durable behavioural model of what the system is meant to do, so future sessions can reason about intent, spot missing decisions, catch spec-code drift, and generate better tests from explicit behaviour.
-
-## First steps
-
-Start with `/allium` if you are not sure which workflow you need. It gives ECA the Allium syntax summary and routes you toward the right skill.
+Start with `/allium` if you are not sure which workflow you need. It gives ECA the Allium syntax summary and routes you toward the right skill. You can also hand `/allium` a goal (for example `/allium add gift cards`) and ECA will drive the whole loop — spec → tests → code — to convergence on your behalf.
 
 If you are designing a new feature, start with `/allium:elicit`. ECA will ask structured questions about the boundary, actors, lifecycle states, triggers, edge cases, and open questions, then help turn the answers into a `.allium` specification.
 
@@ -44,7 +32,7 @@ Plugin skills are namespaced by ECA. Invoke them as:
 
 | Skill | Purpose |
 |-------|---------|
-| `/allium` | Entry point — syntax summary, routing table, quick reference |
+| `/allium` | Entry point — syntax summary, routing table, quick reference; give it a goal and it drives the whole loop to convergence |
 | `/allium:elicit` | Build a spec through structured conversation with stakeholders |
 | `/allium:distill` | Extract a spec from an existing codebase |
 | `/allium:tend` | Edit and update existing specs |
@@ -68,11 +56,11 @@ Plugin skills are namespaced by ECA. Invoke them as:
 
 | Hook | Trigger | Purpose |
 |------|---------|---------|
-| `allium.check-spec` | ECA `write_file`/`edit_file` on `.allium` files | Runs `allium check` automatically when the CLI is installed and returns diagnostics to the model as additional context |
+| `allium.check-spec` | ECA `write_file`/`edit_file` on `.allium` files | Runs `allium check` automatically when the CLI is installed and returns diagnostics to the model as additional context. If the CLI is missing, surfaces a one-time notice (per machine) prompting the model to offer installing it |
 
-### References (7)
+### References (9)
 
-Full language reference, 9 worked patterns, test generation taxonomy, migration guides, and skill-specific examples.
+Full language reference, 9 worked patterns, test generation taxonomy, the Allium loop (recommended loops and the loop-driving procedure), migration guides, and skill-specific examples.
 
 ## Usage
 
@@ -85,10 +73,10 @@ The `allium` rule is path-scoped — it's automatically fetched when you work wi
 This plugin was ported from the upstream Allium repository. For reproducibility and auditing, the last upstream commit used as a reference for this port is recorded below:
 
 - Repository: [juxt/allium](https://github.com/juxt/allium)
-- Commit: `8af2da4e557560277b6621e09785b63f5c262fb9`
+- Commit: `899cb05e1418e001bf0cdbc7b542877859d138b0`
 - Author: yavorpanayotov
-- Date: 2026-06-19 17:59:41 +0300
-- Message: Bump plugin version to 3.4.0 (#50)
+- Date: 2026-07-22 12:57:25 +0300
+- Message: Point homepage at allium-lang.org (#58) — upstream plugin version 3.8.0
 
 If you update the plugin from upstream in future, please update this section with the new commit hash and date.
 

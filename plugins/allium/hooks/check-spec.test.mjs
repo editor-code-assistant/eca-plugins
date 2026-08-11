@@ -1,5 +1,5 @@
 import { execFileSync } from "child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, chmodSync } from "fs";
 import { tmpdir } from "os";
 import path from "path";
 
@@ -128,12 +128,6 @@ assert(
 
 console.log("\nECA hook — CLI handling:\n");
 
-assert(
-  "missing allium CLI skipped silently",
-  run({ tool_input: { path: validA }, workspaces: [workspaceA] }, { env: missingCliEnv }).stdout,
-  "",
-);
-
 const invalidResult = run({ tool_input: { path: validA }, workspaces: [workspaceA] }, { env: fakeEnv });
 const invalidJson = parseJson(invalidResult.stdout);
 
@@ -170,6 +164,135 @@ const fallbackCwdResult = run(
 );
 assert("missing workspaces falls back to cwd", parseJson(fallbackCwdResult.stdout) !== null, true);
 
+// --- CLI missing: one-time install notice ---
+// Force the "binary not found" path by running with a PATH that contains no
+// allium, and an isolated XDG_CACHE_HOME so the per-machine marker is hermetic.
+
+console.log("\nECA hook — CLI missing, one-time install notice:\n");
+
+function noticeOf(result) {
+  return parseJson(result.stdout)?.additionalContext || "";
+}
+
+const noticeCache = mkdtempSync(path.join(tmpdir(), "allium-eca-hook-cache-"));
+const noticeEnv = { ...missingCliEnv, XDG_CACHE_HOME: noticeCache };
+
+const firstNotice = run({ tool_input: { path: validA }, workspaces: [workspaceA] }, { env: noticeEnv });
+assert("first edit with no CLI exits cleanly", firstNotice.status, 0);
+assert(
+  "first edit surfaces notice as additionalContext",
+  /install/i.test(noticeOf(firstNotice)),
+  true,
+);
+assert(
+  "notice carries a concrete install command",
+  /cargo install allium-cli/.test(noticeOf(firstNotice)),
+  true,
+);
+assert(
+  "notice identifies the ECA hook",
+  noticeOf(firstNotice).includes("allium.check-spec"),
+  true,
+);
+assert(
+  "persisted notice promises it fires only once",
+  /only once per machine/.test(noticeOf(firstNotice)),
+  true,
+);
+
+const secondNotice = run({ tool_input: { path: validA }, workspaces: [workspaceA] }, { env: noticeEnv });
+assert("notice fires only once (subsequent edits emit nothing)", secondNotice.stdout, "");
+
+// A fresh cache (e.g. another machine) shows the notice again.
+const freshCache = mkdtempSync(path.join(tmpdir(), "allium-eca-hook-cache-"));
+const freshNotice = run(
+  { tool_input: { path: validA }, workspaces: [workspaceA] },
+  { env: { ...missingCliEnv, XDG_CACHE_HOME: freshCache } },
+);
+assert("notice shows again under a fresh cache", /install/i.test(noticeOf(freshNotice)), true);
+
+// Scope: the notice must NOT leak onto non-spec or out-of-workspace edits even
+// when the CLI is absent — those exit early, before the checker is invoked.
+const scopeCache = mkdtempSync(path.join(tmpdir(), "allium-eca-hook-cache-"));
+const scopeEnv = { ...missingCliEnv, XDG_CACHE_HOME: scopeCache };
+
+assert(
+  "no notice on non-.allium edit when CLI absent",
+  run({ tool_input: { path: markdownFile }, workspaces: [workspaceA] }, { env: scopeEnv }).stdout,
+  "",
+);
+assert(
+  "no notice on out-of-workspace .allium edit when CLI absent",
+  run({ tool_input: { path: outsideFile }, workspaces: [workspaceA] }, { env: scopeEnv }).stdout,
+  "",
+);
+
+// A blocked cache: XDG_CACHE_HOME points at a file, so the per-machine marker
+// can't be written. Shared by the fallback and both-unwritable scenarios.
+const blockedRoot = mkdtempSync(path.join(tmpdir(), "allium-eca-hook-blocked-"));
+const blockedCache = path.join(blockedRoot, "not-a-dir");
+writeFileSync(blockedCache, "x\n");
+
+// Fallback: cache unwritable but workspace root writable → the marker falls
+// back to .allium-cli-notice-shown in the workspace root, so the notice still
+// fires only once (per workspace) and doesn't crash.
+const fallbackWorkspace = mkdtempSync(path.join(tmpdir(), "allium-eca-hook-fallback-"));
+const fallbackFile = path.join(fallbackWorkspace, "spec.allium");
+writeFileSync(fallbackFile, "-- allium: 3\n");
+const fallbackEnv = { ...missingCliEnv, XDG_CACHE_HOME: blockedCache };
+
+const fb1 = run({ tool_input: { path: fallbackFile }, workspaces: [fallbackWorkspace] }, { env: fallbackEnv });
+assert("notice shown when cache unwritable, via workspace fallback", /install/i.test(noticeOf(fb1)), true);
+assert(
+  "fallback notice names the workspace marker file",
+  /\.allium-cli-notice-shown/.test(noticeOf(fb1)),
+  true,
+);
+assert(
+  "fallback notice does not claim per-machine once-only",
+  /only once per machine/.test(noticeOf(fb1)),
+  false,
+);
+assert(
+  "workspace fallback marker file is actually created",
+  existsSync(path.join(fallbackWorkspace, ".allium-cli-notice-shown")),
+  true,
+);
+const fb2 = run({ tool_input: { path: fallbackFile }, workspaces: [fallbackWorkspace] }, { env: fallbackEnv });
+assert("workspace fallback marker suppresses re-firing", fb2.stdout, "");
+
+// Both unwritable: cache blocked AND workspace root read-only → no marker can
+// be persisted, so the hook hands off to manual install and keeps re-firing.
+// (Skipped under root, which bypasses directory permissions.)
+const roWorkspace = mkdtempSync(path.join(tmpdir(), "allium-eca-hook-rows-"));
+const roFile = path.join(roWorkspace, "spec.allium");
+writeFileSync(roFile, "-- allium: 3\n");
+chmodSync(roWorkspace, 0o500);
+const runningAsRoot = typeof process.getuid === "function" && process.getuid() === 0;
+if (!runningAsRoot) {
+  const roEnv = { ...missingCliEnv, XDG_CACHE_HOME: blockedCache };
+  const ro1 = run({ tool_input: { path: roFile }, workspaces: [roWorkspace] }, { env: roEnv });
+  assert(
+    "both-unwritable notice tells the user it couldn't be saved",
+    /could NOT be saved/.test(noticeOf(ro1)),
+    true,
+  );
+  assert(
+    "both-unwritable notice asks the user to confirm self-install",
+    /confirm they're happy/.test(noticeOf(ro1)),
+    true,
+  );
+  const ro2 = run({ tool_input: { path: roFile }, workspaces: [roWorkspace] }, { env: roEnv });
+  assert("both-unwritable notice re-fires", /install/i.test(noticeOf(ro2)), true);
+}
+chmodSync(roWorkspace, 0o700);
+
+rmSync(noticeCache, { recursive: true, force: true });
+rmSync(freshCache, { recursive: true, force: true });
+rmSync(scopeCache, { recursive: true, force: true });
+rmSync(blockedRoot, { recursive: true, force: true });
+rmSync(fallbackWorkspace, { recursive: true, force: true });
+rmSync(roWorkspace, { recursive: true, force: true });
 rmSync(root, { recursive: true, force: true });
 
 console.log(`\n${passed} passed, ${failed} failed`);
