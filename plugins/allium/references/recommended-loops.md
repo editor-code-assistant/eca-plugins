@@ -4,7 +4,7 @@ Allium keeps three artefacts in agreement: the **spec** (intended behaviour), th
 
 There are two entry points — `elicit` works *forward* from intent, `distill` works *backward* from existing code — but both run the same convergence loop afterwards.
 
-Skill names below are bare (`elicit`, `distill`, `propagate`, `tend`, `weed`); in ECA they are invoked as namespaced plugin skills — `/allium:elicit`, `/allium:distill`, and so on. To have ECA drive the whole loop itself, give `/allium` a goal (see [driving the loop](./driving-the-loop.md)).
+Skill names below are bare (`elicit`, `distill`, `propagate`, `tend`, `weed`, `witness`); in ECA they are invoked as namespaced plugin skills — `/allium:elicit`, `/allium:distill`, and so on. To have ECA drive the whole loop itself, give `/allium` a goal (see [driving the loop](./driving-the-loop.md)).
 
 ## The loop: gather context → take action → verify → repeat
 
@@ -44,6 +44,7 @@ Each skill moves one artefact relative to another:
 | *(implement)* | tests → code | ordinary coding — **not an Allium skill** |
 | `weed` | code ↔ spec | reconcile divergence either direction |
 | `tend` | edits spec | re-enter the loop after a change |
+| `witness` | attests convergence | independently confirm the loop's claim from ground truth (gate) |
 
 The implementation step is plain LLM-and-human coding. Allium has no codegen for the application itself; it produces the spec and the tests, and those hold the hand-written code to the specified behaviour.
 
@@ -112,7 +113,7 @@ Note the expectation is **inverted** from the spec-first loop: there the new tes
 
 ## Running the loop autonomously (for the LLM and the agents)
 
-Both loops can be driven autonomously — `tend` and `weed` already ship as standalone agents. When running unattended, treat the loop as an explicit control loop:
+Both loops can be driven autonomously — `distill`, `propagate`, `tend`, `weed` and `witness` all ship as standalone agents. When running unattended, treat the loop as an explicit control loop:
 
 **Per tick:**
 1. Advance the spec (`elicit` or `distill` on the first tick, `tend` thereafter only if needed).
@@ -122,7 +123,7 @@ Both loops can be driven autonomously — `tend` and `weed` already ship as stan
 5. Re-evaluate the convergence invariant.
 
 **Exit conditions — stop when either holds:**
-- the convergence invariant is satisfied; or
+- the convergence invariant is satisfied *and an independent `witness` pass attests it* (see [driving the loop](./driving-the-loop.md) §11) — the run's own reading is confirmed against ground truth before you call it done; or
 - a bounded iteration budget is exhausted (don't spin forever).
 
 **Guardrails (do not violate, even to reach green):**
@@ -132,7 +133,7 @@ Both loops can be driven autonomously — `tend` and `weed` already ship as stan
 - **No magic numbers in code that the spec puts in `config`.** Honour the spec's parameters.
 - **Fix the code, not the contract**, when code and spec disagree and the spec is right.
 
-**State worth tracking across ticks:** tests status (pass/fail counts), `weed` verdict, count of open questions, and — for code-first — whether the last `distill` pass found anything new. Convergence is all four trending to zero/clean.
+**State worth tracking across ticks:** tests status (pass/fail counts), `weed` verdict, count of open questions, and — for code-first — whether the last `distill` pass found anything new. Convergence is all four trending to zero/clean. When driving the loop autonomously, record these into a run trace each tick and surface the moment they stop trending, so a run that has quietly stalled says so instead of grinding to the cap in silence (see [driving the loop](./driving-the-loop.md) §13).
 
 ## Driving the loop with one prompt
 
@@ -156,7 +157,7 @@ You don't have to invoke the skills one at a time. Hand a single agentic session
 - **No-progress cap** — stop after **2 iterations** with no measurable change (test pass count, weed verdict, open-question count). This catches thrashing against a test the agent can't satisfy.
 - **Escalate on open question** — a decision goes to the human, never a silent guess.
 
-The loop can also be driven by the autonomous `tend` and `weed` agents, or by a loop primitive supplied by the harness. Those supply the "keep going" mechanism; the procedure and the exit conditions above are unchanged.
+The loop can also be driven by the autonomous `distill`, `propagate`, `tend`, `weed` and `witness` agents, or by a loop primitive supplied by the harness. Those supply the "keep going" mechanism; the procedure and the exit conditions above are unchanged.
 
 ## The "produce the code" prompt
 
@@ -169,3 +170,4 @@ There is no skill for implementation. Point the model at the spec and the propag
 - [Assessing specs](./assessing-specs.md) — gauge spec maturity before propagating (a coarse spec yields only thin tests).
 - [Actioning findings](./actioning-findings.md) — the `weed` and `allium analyse` finding taxonomy used in steps 4–5.
 - [Test generation](./test-generation.md) — what `propagate` produces.
+Test generation](./test-generation.md) — what `propagate` produces.

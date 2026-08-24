@@ -9,6 +9,13 @@ This guide covers extracting Allium specifications from existing codebases. The 
 
 Code tells you *how* something works. A specification captures *what* it does and *why* it matters. The skill is asking "why does the stakeholder care about this?" and "could this be different while still being the same system?"
 
+## Interaction modes
+
+This skill runs in two modes. Every instruction below that asks, prompts or validates with the user follows the mode:
+
+- **Interactive** — running inline in a conversation. Ask the user directly and wait for the answer.
+- **Non-interactive** — running as the `distill` subagent (for example inside the Allium loop), where no user is reachable. Scope the distillation from the goal you were given, and do not guess at judgement calls: record each unconfirmed judgement — intended vs accidental behaviour, actor identity, candidate processes, scope exclusions — as an `open question` declaration in the distilled spec, and list the parked questions in your final output.
+
 ## Scoping the distillation effort
 
 Before diving into code, establish what you are trying to specify. Not every line of code deserves a place in the spec.
@@ -314,14 +321,30 @@ The presence of multiple implementations suggests the variation itself is a doma
 
 ## Distillation process
 
+Distillation reads a lot of code but produces a small spec. The expensive mistake is letting all that source pile up in one context window where it is re-read on every turn. Keep the working set lean: orchestrate the read-heavy steps as subagents and keep only their distilled output.
+
+### The orchestration model
+
+For anything beyond a handful of files, do not read the whole codebase yourself. Instead:
+
+1. **Map** the codebase into bounded contexts — a light scan (Step 1), not a deep read.
+2. **Fan out.** Spawn one subagent per bounded context. Each reads only its slice and returns *distilled fragments* — draft entities (states + transition edges), draft rules (trigger / requires / ensures), external boundaries, actors and config — each with `file:line` evidence. Subagents return spec fragments and evidence, never raw source. Give each subagent its target paths, the shared entity vocabulary from the map (so contexts agree on names), and the extraction guidance in Steps 2–5; ask for a compact fragment, not prose commentary.
+3. **Assemble.** You, the orchestrator, hold only the map and the returned fragments — not the source. Merge fragments into one spec: dedupe cross-cutting entities (`Email`, `Notification`, `AuditLog`), reconcile terminology (one name per concept, see the challenges reference), and resolve cross-context references.
+4. **Abstract and validate** the assembled spec (Steps 6–7).
+
+Why this matters: raw source never accumulates in your context, so it is not re-processed turn after turn; each subagent's slice is discarded once its fragment returns. You still read every relevant line — just not all at once, and not repeatedly. The result is the same spec at a fraction of the tokens.
+
+For a genuinely small codebase (a handful of files) the fan-out overhead is not worth it — read it directly and apply Steps 1–7 inline.
+
 ### Step 1: Map the territory
 
-Before extracting any specification, understand the codebase structure:
+Scan — do not deeply read — to carve the codebase into bounded contexts and a shared vocabulary, and to plan the fan-out. Identify:
 
-1. **Identify entry points.** API routes, CLI commands, message handlers, scheduled jobs.
-2. **Find the domain models.** Usually in `models/`, `entities/`, `domain/`.
-3. **Locate business logic.** Services, use cases, handlers.
-4. **Note external integrations.** What third parties does it talk to?
+1. **Entry points.** API routes, CLI commands, message handlers, scheduled jobs.
+2. **Domain models.** Usually in `models/`, `entities/`, `domain/`.
+3. **Business logic.** Services, use cases, handlers.
+4. **External integrations.** What third parties does it talk to?
+5. **Bounded contexts.** Group the above into cohesive slices (by module, package or feature area) — these become the fan-out units. Note the entities that appear in more than one slice; they are the shared vocabulary every subagent must use consistently.
 
 Create a rough map:
 ```
@@ -338,7 +361,15 @@ Services:
 
 Integrations:
   - Google Calendar, Slack, Greenhouse, SendGrid
+
+Bounded contexts (fan-out units):
+  - scheduling: Interview, InterviewSlot (SchedulingService, /api/interviews)
+  - invitations: Invitation, Feedback (/api/invitations, expire job)
+  - intake: Candidate (Greenhouse webhook) — external
+Shared entities: Candidate, Interview (appear across contexts)
 ```
+
+Steps 2–5 are the **extraction guidance each fan-out subagent applies to its slice** (and that you apply directly for a small codebase). Hand them to each subagent along with its target paths and the shared vocabulary; collect the fragments and assemble per the orchestration model.
 
 ### Step 2: Extract entity states
 
@@ -535,9 +566,9 @@ After extracting surfaces from API endpoints, identify actors by examining authe
 
 Ask the user to confirm: "This endpoint requires admin role authentication. Is 'Admin' a distinct actor, or is this the same person as the regular user with elevated permissions?"
 
-### Step 6: Abstract away implementation
+### Step 6: Assemble and abstract
 
-Now make a pass through your extracted spec and remove implementation details.
+If you fanned out, first assemble the returned fragments into one spec: collect every entity, rule, boundary and config value; dedupe cross-cutting entities and reconcile terminology so each concept has exactly one name (a concept that two contexts named differently must be unified now — see the Duplicate terminology challenge below). Then make a pass over the assembled spec to remove implementation details.
 
 **Before (too concrete):**
 ```
@@ -810,6 +841,19 @@ If any remain, ask: "Would a stakeholder include this in a requirements doc?"
 ## After distillation
 
 The extracted spec is a starting point. If distillation reveals gaps that need structured discovery (unclear requirements, complex entity relationships, unstated business rules), use the `elicit` skill to fill them. For targeted changes as requirements evolve, use the `tend` skill. For checking ongoing alignment between the spec and implementation, use the `weed` skill.
+
+## Typed result (loop hand-off)
+
+When running as the `distill` subagent inside the Allium loop, return your result as a single JSON object conforming to [distill-result.schema.json](../../references/schemas/distill-result.schema.json), and nothing else: the `spec_path`, the parked `open_questions`, and a one-line `summary` of what the spec covers. Emit every field, using `[]` for empty lists. The source you read stays out of the caller's context; only these fields come back. Running interactively, present your findings in prose as usual — the typed record is for the machine hand-off, not the conversation.
+
+```json
+{
+  "phase": "distill",
+  "spec_path": "giftcard.allium",
+  "open_questions": ["Is forcing an over-redeemed balance to zero intended or accidental?"],
+  "summary": "GiftCard redemption and status lifecycle"
+}
+```
 
 ## References
 
