@@ -11,5 +11,27 @@
         "shell": "node \"${plugin:root}/hooks/check-spec.mjs\""
       }
     ]
+  },
+  "allium.loop-trace-pre": {
+    "type": "preToolCall",
+    "matcher": "eca__spawn_agent",
+    "visible": false,
+    "actions": [
+      {
+        "type": "shell",
+        "shell": "node \"${plugin:root}/hooks/loop-trace.mjs\" pre"
+      }
+    ]
+  },
+  "allium.loop-trace-post": {
+    "type": "postToolCall",
+    "matcher": "eca__spawn_agent",
+    "visible": false,
+    "actions": [
+      {
+        "type": "shell",
+        "shell": "node \"${plugin:root}/hooks/loop-trace.mjs\" post"
+      }
+    ]
   }
 }

@@ -7,6 +7,13 @@ description: "Weed the Allium garden. Find where Allium specifications and imple
 
 You weed the Allium garden. You compare `.allium` specifications against implementation code, find where they have diverged, and help resolve the divergences.
 
+## Interaction modes
+
+This skill runs in two modes. Every instruction below that asks, prompts or checks with the user follows the mode:
+
+- **Interactive** — running inline in a conversation. Ask the user directly and wait for the answer.
+- **Non-interactive** — running as the `weed` subagent (for example inside the Allium loop), where no user is reachable. Do not guess an answer: report each question as an open finding in your output (and, when updating the spec, record it as an `open question` declaration), then continue with the work that does not depend on it.
+
 ## Startup
 
 1. Read [language reference](../../references/language-reference.md) for the Allium syntax and validation rules.
@@ -84,7 +91,7 @@ When code has repeated interface contracts across service boundaries (e.g. the s
 
 ## Context management
 
-Spec alignment checks can require many edit-validate cycles. If you anticipate a long iterative session, or if the context is growing large, advise the user to open a fresh chat specifically for weeding the spec. Provide a copy-paste prompt so they can resume, such as: "Use the `weed` skill to continue resolving divergences between the [Spec Name] spec and [Implementation Files]."
+Spec alignment checks can require many edit-validate cycles. When running interactively, if you anticipate a long iterative session, or if the context is growing large, advise the user to open a fresh chat specifically for weeding the spec. Provide a copy-paste prompt so they can resume, such as: "Use the `weed` skill to continue resolving divergences between the [Spec Name] spec and [Implementation Files]."
 
 ## Verification
 
@@ -104,3 +111,21 @@ Classification: [proposed classification with reasoning]
 ```
 
 Group related divergences together. Lead with the most consequential findings.
+
+### Typed result (loop hand-off)
+
+When running as the `weed` subagent inside the Allium loop, return your result as a single JSON object conforming to [weed-result.schema.json](../../references/schemas/weed-result.schema.json), and nothing else. The loop routes on the structured fields (`verdict`, each divergence's `classification`, `open_questions`) rather than parsing prose, so the routing and the convergence check stay deterministic. Keep the `summary` field to the one human-readable line; put the detail in the structured fields. Emit every field, using `[]` for empty lists. Running interactively, present the prose format above as before — the typed record is for the machine hand-off, not the conversation.
+
+```json
+{
+  "phase": "weed",
+  "mode": "check",
+  "verdict": "dirty",
+  "divergences": [
+    { "subject": "Order.cancel", "classification": "code-bug", "spec": "cancel allowed from paid (shop.allium:42)", "code": "guarded to pending only (order.py:88)" }
+  ],
+  "open_questions": [],
+  "artefacts": [],
+  "summary": "1 divergence: Order.cancel (code-bug)"
+}
+```

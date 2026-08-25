@@ -9,6 +9,13 @@ This skill generates tests from Allium specifications. Propagation is how plants
 
 Deterministic tools guarantee completeness (every spec construct maps to a test obligation). You handle the implementation bridge: correlating spec constructs with code, generating tests in the project's conventions.
 
+## Interaction modes
+
+This skill runs in two modes. Every instruction below that asks or suggests something to the user follows the mode:
+
+- **Interactive** — running inline in a conversation. Ask the user directly and wait for the answer.
+- **Non-interactive** — running as the `propagate` subagent (for example inside the Allium loop), where no user is reachable. Report anything that needs a human decision — a spec too coarse to propagate, an ambiguous implementation bridge, uncovered obligations — in your final output and continue with the work that does not depend on it.
+
 ## Prerequisites
 
 Before propagating tests, you need:
@@ -225,6 +232,31 @@ Obligations still uncovered when a guard trips are the only part of reconciliati
 Missing implementation is not a residue category. In a spec-first flow no code exists yet by design: write the test against the intended interface and let it fail — a failing test covers its obligation, and the loop's implement phase turns it green. An obligation is uncovered only when no test for it could be written at all.
 
 Close with a single summary line: `N obligations, M covered, K uncovered`. When everything is covered that one line is the entire user-facing output of reconciliation. Silence about an individual obligation means it is covered; anything itemised needs a human decision. When propagate runs inside the Allium loop, this line feeds the loop's consolidated summary, and the loop must not treat the spec as converged while obligations remain uncovered without a reported reason.
+
+### Recording the tamper baseline (in the loop)
+
+When running inside the Allium loop, record the reconciliation baseline so the loop's independent witness can later confirm nothing was falsified. In the ledger (`.allium-loop/<goal-slug>.json`, see [driving the loop](../../references/driving-the-loop.md)):
+
+- write a content hash (e.g. sha256) for each generated test file under `generated_test_hashes`, keyed by path;
+- record the reconciliation summary line under `reconciliation`.
+
+The hash is the ground truth the `witness` skill re-derives: a generated test whose hash changes with no intervening propagate run is a hand-edited test — the anti-cheat violation the loop must never reach convergence with. Recording the baseline is what makes that check possible; skip it and the witness can confirm the tests pass but not that they were not weakened. This is cheap bookkeeping, not a report — do not narrate it.
+
+### Typed result (loop hand-off)
+
+When running as the `propagate` subagent inside the Allium loop, return your result as a single JSON object conforming to [propagate-result.schema.json](../../references/schemas/propagate-result.schema.json), and nothing else. The loop routes on the structured fields: `obligations` and `uncovered_obligations` decide whether coverage is complete (the loop must not converge while `uncovered_obligations` is non-empty), and `generated_tests` carries the path-and-hash baseline the witness re-derives — the same hashes recorded above, now first-class in the hand-off. Keep the `summary` field to the `N obligations, M covered, K uncovered` line. Emit every field, using `[]` for empty lists — do not omit them. Running interactively, the summary line remains the whole user-facing output as before — the typed record is for the machine hand-off, not the conversation.
+
+```json
+{
+  "phase": "propagate",
+  "obligations": { "total": 12, "covered": 12, "uncovered": 0 },
+  "uncovered_obligations": [],
+  "generated_tests": [{ "path": "order.test.js", "hash": "sha256:9f2c…" }],
+  "test_paths": ["order.test.js"],
+  "open_questions": [],
+  "summary": "12 obligations, 12 covered, 0 uncovered"
+}
+```
 
 ## Interaction with other tools
 
