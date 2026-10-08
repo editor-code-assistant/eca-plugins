@@ -1,7 +1,10 @@
 {
   "mcpServers": {
     "context-mode": {
-      "command": "${plugin:root}/hooks/ctx-server.sh"
+      "command": "${plugin:root}/hooks/ctx-server.sh",
+      "env": {
+        "CONTEXT_MODE_PLATFORM": "eca"
+      }
     }
   }
 }

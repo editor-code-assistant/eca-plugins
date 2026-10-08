@@ -6,4 +6,4 @@ if ! command -v context-mode &>/dev/null; then
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec node "$SCRIPT_DIR/ctx-eca-adapter.mjs" pretooluse
+exec node "$SCRIPT_DIR/ctx-eca-adapter.mjs" postcompact

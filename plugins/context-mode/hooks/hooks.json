@@ -1,25 +1,75 @@
 {
-  "context-mode.session-start": {
-    "type": "sessionStart",
+  "context-mode.chat-start": {
+    "type": "chatStart",
     "visible": false,
+    "description": "Inject context-mode routing guidance and resume context at chat start.",
     "actions": [
-      { "type": "shell", "file": "ctx-sessionstart.sh" }
+      { "type": "shell", "file": "${plugin:root}/hooks/ctx-chatstart.sh" }
+    ]
+  },
+  "context-mode.pre-request": {
+    "type": "preRequest",
+    "visible": false,
+    "description": "Capture user prompts and provide lightweight context-mode request guidance.",
+    "actions": [
+      { "type": "shell", "file": "${plugin:root}/hooks/ctx-prerequest.sh" }
     ]
   },
   "context-mode.pre-tool": {
     "type": "preToolCall",
-    "matcher": "eca__shell_command|eca__read_file|eca__grep",
+    "matcher": {
+      "eca__shell_command": {},
+      "eca__read_file": {},
+      "eca__grep": {},
+      "eca__edit_file": {},
+      "eca__write_file": {},
+      "eca__move_file": {},
+      "eca__directory_tree": {},
+      "eca__spawn_agent": {},
+      "context-mode": {}
+    },
     "visible": false,
+    "description": "Block context-flooding shell fetches and route large work through context-mode.",
     "actions": [
-      { "type": "shell", "file": "ctx-pretooluse.sh" }
+      { "type": "shell", "file": "${plugin:root}/hooks/ctx-pretooluse.sh" }
     ]
   },
   "context-mode.post-tool": {
     "type": "postToolCall",
-    "matcher": "eca__shell_command|eca__read_file|eca__write_file|eca__edit_file|eca__grep|eca__directory_tree|eca__git|eca__spawn_agent|eca__task|eca__compact_chat|context-mode",
+    "matcher": {
+      "eca__shell_command": {},
+      "eca__read_file": {},
+      "eca__write_file": {},
+      "eca__edit_file": {},
+      "eca__move_file": {},
+      "eca__grep": {},
+      "eca__directory_tree": {},
+      "eca__git": {},
+      "eca__spawn_agent": {},
+      "eca__task": {},
+      "context-mode": {}
+    },
+    "runOnError": true,
     "visible": false,
+    "description": "Capture tool results for context-mode session continuity.",
     "actions": [
-      { "type": "shell", "file": "ctx-posttooluse.sh" }
+      { "type": "shell", "file": "${plugin:root}/hooks/ctx-posttooluse.sh" }
+    ]
+  },
+  "context-mode.pre-compact": {
+    "type": "preCompact",
+    "visible": false,
+    "description": "Persist context-mode resume snapshot before ECA compacts the chat.",
+    "actions": [
+      { "type": "shell", "file": "${plugin:root}/hooks/ctx-precompact.sh" }
+    ]
+  },
+  "context-mode.post-compact": {
+    "type": "postCompact",
+    "visible": false,
+    "description": "Inject context-mode resume snapshot after ECA compacts the chat.",
+    "actions": [
+      { "type": "shell", "file": "${plugin:root}/hooks/ctx-postcompact.sh" }
     ]
   }
 }
