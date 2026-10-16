@@ -169,6 +169,16 @@
       "author": "JUXT",
       "icon": "🧅",
       "featured": true
+    },
+    {
+      "name": "cohesivity",
+      "description": "Provision Postgres, Redis, object storage, hosting and auth for the app you build, with no account needed to start",
+      "source": "plugins/cohesivity",
+      "category": "Development",
+      "tags": ["backend", "database", "hosting", "mcp", "deploy"],
+      "author": "Cohesivity",
+      "icon": "🗄️",
+      "featured": false
     }
   ]
 }
