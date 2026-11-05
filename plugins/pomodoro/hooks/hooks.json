@@ -15,7 +15,7 @@
     "actions": [
       {
         "type": "shell",
-        "file": "pomodoro-check.sh"
+        "file": "${plugin:root}/hooks/pomodoro-check.sh"
       }
     ]
   }
