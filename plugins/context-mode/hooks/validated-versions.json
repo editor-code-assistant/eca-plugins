@@ -1,0 +1,10 @@
+{
+  "$comment": [
+    "context-mode major.minor versions the ECA adapter's self-check has",
+    "been run against. ctx-eca-adapter.mjs warns once at chatStart when",
+    "the installed version is outside this list; ctx-compat.mjs reports",
+    "it and validates a new release. Add a minor here after running",
+    "ctx-eca-adapter.test.mjs against that release."
+  ],
+  "validated": ["1.0", "2.1"]
+}
