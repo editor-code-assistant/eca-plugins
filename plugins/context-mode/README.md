@@ -22,7 +22,7 @@ only the answer.
 - **Session continuity** — `chatStart`, `preRequest`, `postToolCall`,
   `preCompact` and `postCompact` hooks journal prompts, decisions, edits,
   commands and errors, and restore a resume snapshot after compaction.
-  See also [Limitation #1](#1-no-per-call-id-ecas-mcp-client-sends-no-_metasessionid)
+  See also [Limitation #1](#1-_metasessionid-is-version-gated)
 
 ## Prerequisites
 
@@ -83,7 +83,7 @@ Once installed, context-mode works automatically. The routing rules guide the ag
 | `/context-mode:ctx-upgrade` (2) | Upgrade context-mode in place |
 | `/context-mode:ctx-purge` | Permanently delete all indexed content from the knowledge base |
 
-(1) See [Limitation #2](#2-session-statistics-are-split)
+(1) See [Limitation #2](#2-session-statistics-are-split-on-older-eca)
 
 (2) See [Limitation #4](#4-host-aware-tools-speak-for-claude-code)
 
@@ -105,11 +105,11 @@ On **v1** the names differ: `ctx_batch_execute`, `ctx_execute_file(path,
 ...)`, `ctx_fetch_and_index(url, source)`, and there is no `ctx_resume`.
 The MCP tool list in your session is authoritative.
 
-(1) See [Limitation #1](#1-no-per-call-id-ecas-mcp-client-sends-no-_metasessionid)
+(1) See [Limitation #1](#1-_metasessionid-is-version-gated)
 
-(2) See [Limitation #2](#2-session-statistics-are-split)
+(2) See [Limitation #2](#2-session-statistics-are-split-on-older-eca)
 
-(3) See [Limitation #3](#3-ctx_purgesession--cannot-target-a-chat)
+(3) See [Limitation #3](#3-ctx_purgesession--needs-eca-01711)
 
 (4) See [Limitation #4](#4-host-aware-tools-speak-for-claude-code)
 
@@ -140,15 +140,16 @@ Every significant tool call is tracked:
 
 | Need | Command |
 |------|---------|
-| What were we working on? | `context-mode__ctx_search(sort: "timeline")` |
+| What were we working on? | `context-mode__ctx_resume` |
+| … if `ctx_resume` reports no rows | `context-mode__ctx_search(sort: "timeline")` |
 | What did we decide? | `context-mode__ctx_search(queries: ["decision"], source: "decision")` |
 | What went wrong? | `context-mode__ctx_search(queries: ["error"], sort: "timeline")` |
 
 After compaction the plugin injects the resume snapshot through ECA's
 `postCompact` `additionalContext`, so the model does not have to ask for
-it. `ctx_resume` and `ctx_search(scope: "session")` need the chat id on
-the MCP call, which ECA does not send yet — see
-[Known limitations](#known-limitations).
+it. `ctx_resume` and `ctx_search(scope: "session")` need ECA to forward
+the chat id as `_meta.sessionId`, which it does from 0.171.1 — see
+[ECA version and `_meta.sessionId`](#eca-version-and-_metasessionid).
 
 ## Think in Code
 
@@ -191,21 +192,31 @@ a change before you update.
 
 ## Known limitations
 
-### 1. No per-call id, ECA's MCP client sends no `_meta.sessionId`
-   Without such identifiers the context-mode server falls back to a
-   process-local session id (`mcp:<uuid>`). The hooks journal under ECA's
-   chat id instead, so `ctx_resume` and `ctx_search(scope: "session")` find
-   no rows. The adapter rewrites v2's `ctx_resume` hint to point at
-   `ctx_search(sort: "timeline")`; use that, or the default `worktree`
-   scope. A one-line ECA-core change (send `_meta.sessionId`) would fix
-   this properly.
-### 2. Session statistics are split
-   The server's own tool calls are journaled under `mcp:<uuid>` — a new id
-   per server process — while the hook rows sit under chat ids, so
-   `ctx_stats`'s per-session view is fragmented. Per-tool and per-project
-   totals are correct.
-### 3. `ctx_purge(session: …)` cannot target a chat
-   This is because it needs the chat id. `project: true` and `source:` work.
+### 1. `_meta.sessionId` is version-gated
+   ECA sends the chat id as `_meta.sessionId` on MCP `tools/call` from
+   0.171.0, and reports `eca_version` in the hook payload from 0.171.1.
+   The adapter keys on that version (`ecaSessionIdSince` in
+   `hooks/validated-versions.json`, default `0.171.1`):
+
+   - On 0.171.1 and later the server journals its own calls under the
+     chat id, so `ctx_resume`, `ctx_search(scope: "session")` and
+     `ctx_purge(session: …)` work, and v2's `ctx_resume` hint is left as
+     written.
+   - On older ECA the server falls back to a process-local `mcp:<uuid>`,
+     so the hint is rewritten to `ctx_search(sort: "timeline")` and the
+     session-scoped tools find only the hook-journaled rows.
+
+   `CONTEXT_MODE_ECA_SESSION_ID=on|off` overrides the decision, which is
+   what the self-check uses to exercise both branches.
+### 2. Session statistics are split on older ECA
+   On ECA before 0.171.1 the server's own tool calls are journaled under
+   `mcp:<uuid>` — a new id per server process — while the hook rows sit
+   under chat ids, so `ctx_stats`'s per-session view is fragmented. On
+   0.171.1 and later both use the chat id and the view is whole. Per-tool
+   and per-project totals are correct either way.
+### 3. `ctx_purge(session: …)` needs ECA 0.171.1+
+   It targets the chat id, which only reaches the server from 0.171.1.
+   On older ECA use `project: true` or `source:`.
 ### 4. Host-aware tools speak for Claude Code
    context-mode has no ECA agent, so the plugin runs the server as
    `--agent claude-code`. `ctx_doctor`'s host-config rows and `ctx_upgrade`
@@ -226,61 +237,29 @@ resolve to the same worktree.
 - Set `CONTEXT_MODE_ECA_DEBUG=1` to get adapter diagnostics on stderr.
 - Set `CONTEXT_MODE_ROOT` to point the adapter at a specific
   context-mode package (useful for testing an unreleased build).
+- Set `CONTEXT_MODE_ECA_SESSION_ID=on|off` to force whether the adapter
+  treats ECA as forwarding `_meta.sessionId` (testing, see
+  [limitation #1](#1-_metasessionid-is-version-gated)).
 - If hooks do nothing, check that `context-mode` is on `PATH` — the
   plugin no-ops silently when it is not installed.
 
-## When ECA starts sending an id
+## ECA version and `_meta.sessionId`
 
-[Limitation #1](#1-no-per-call-id-ecas-mcp-client-sends-no-_metasessionid)
-is the only item here that needs a change in ECA itself. When `mcp.clj`'s
-`request-tool-call` adds `params._meta.sessionId`, most of it starts
-working on its own — but several places in this plugin were written around
-the gap and should be reverted.
+ECA 0.171.0 started sending the chat id as `_meta.sessionId` on MCP
+`tools/call` (#696); 0.171.1 also reports `eca_version` in every hook
+payload (#697), so it is the first release this plugin can recognise.
+The adapter uses that version to decide whether context-mode's
+`ctx_resume` hint is accurate:
 
-### Starts working with no plugin change
+- `eca_version` ≥ `ecaSessionIdSince` (`hooks/validated-versions.json`,
+  `0.171.1`) → the server journals under the chat id, so the hint is left
+  as context-mode wrote it and `ctx_resume` works.
+- older ECA, or no `eca_version` at all → the hint is rewritten to
+  `context-mode__ctx_search(sort: "timeline")`, which works either way.
 
-- `ctx_resume` returns this chat's state block, instead of
-  `ctx_resume: no journal rows for this session yet.`
-- `ctx_search(scope: "session")` finds the hook-journaled rows.
-- `ctx_stats`'s per-session view stops being split, because the server's
-  own calls and the hook rows then share one session id
-  ([limitation #2](#2-session-statistics-are-split)).
+`CONTEXT_MODE_ECA_SESSION_ID=on|off` overrides the decision, which is
+what the self-check uses to exercise both branches.
 
-### Change in the plugin
-
-1. `hooks/ctx-eca-adapter.mjs` — delete `RESUME_HINT_RE`, `RESUME_HINT_FIX`
-   and the `.replace(RESUME_HINT_RE, RESUME_HINT_FIX)` in
-   `rewriteToolNames`. v2's own hint ("Call `ctx_resume` for a summary")
-   becomes correct again.
-2. `hooks/ctx-eca-adapter.test.mjs` — delete the probe
-   "the resume hint does not point at ctx_resume".
-3. `rules/context-mode.md` — the `0. MEMORY` step and the
-   `## Session Continuity` table go back to `ctx_resume`, and can drop the
-   parenthetical about `scope: "session"`.
-4. `skills/context-mode/SKILL.md` — the same, in its session table.
-5. `README.md` — this file: the Tools row and footnote for `ctx_resume`,
-   the Session continuity table, and limitation #1 itself.
-6. `ECA-CORE-ISSUE-mcp-session-id.md` — close or delete the draft.
-
-### One thing to check first
-
-The value ECA sends must be the **chat id**, because that is what the
-hooks journal under — `ecaSessionId()` in the adapter is
-`chat_id ?? session_id ?? eca-pid-<ppid>`. If ECA sends its own *session*
-id instead, the two still miss each other and the adapter has to change
-its first choice, which trades per-chat granularity for per-session.
-
-### What must stay
-
-- `--agent claude-code`, and everything in
-  [limitation #4](#4-host-aware-tools-speak-for-claude-code): there is
-  still no ECA agent upstream.
-- The `tool_use_id` forwarding — that is per-*call* uniqueness, and has
-  nothing to do with the session id.
-- The read policy, the network guard and the compat check.
-
-### How to tell it landed
-
-Call `ctx_resume` in a chat that has already done work. The line
-`ctx_resume: no journal rows for this session yet.` disappearing is the
-signal; the returned block's opening tag names the session it found.
+The value ECA sends is the **chat id** — the same id the hooks journal
+under (`sessionId()` in the adapter is
+`chat_id ?? session_id ?? eca-pid-<ppid>`), so the two line up.

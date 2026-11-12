@@ -8,3 +8,7 @@ knowledge base, and that it cannot be undone. Ask for confirmation first.
 If confirmed, call `context-mode__ctx_purge`. Pass `project: true` to
 wipe everything stored for this project, or narrow it with `session` or
 `source` when the user asks for that. Display the result.
+
+`session:` targets a chat id, which the server only receives from ECA
+0.171.1. On older ECA it matches nothing — use `project: true` or
+`source:` instead.

@@ -105,8 +105,10 @@ text stays in the index.
 | `context-mode__ctx_upgrade(mode?)` | Upgrade or uninstall |
 | `context-mode__ctx_purge(session?, source?, project?)` | Delete indexed data |
 
-`ctx_resume` and `ctx_search(scope: "session")` find no rows until ECA
-sends `_meta.sessionId`; use `ctx_search(sort: "timeline")` instead.
+`ctx_resume` and `ctx_search(scope: "session")` need the host to forward
+the chat id as `_meta.sessionId` (ECA 0.171.1 and later do). If
+`ctx_resume` reports no journal rows for this session, fall back to
+`ctx_search(sort: "timeline")`, which works either way.
 `ctx_doctor` and `ctx_upgrade` describe the Claude Code host, not ECA.
 
 ### Language
@@ -163,11 +165,14 @@ Write artifacts to FILES — never inline. Return: file path + 1-line descriptio
 ## Session Continuity
 
 The plugin's hooks journal prompts, decisions, file edits, commands and
-errors per session. After a resume or a compaction, search before asking.
+errors per session. After a resume or a compaction, prefer `ctx_resume`
+before asking; if it reports no rows for this session, use
+`ctx_search(sort: "timeline")`.
 
 | Need | Call |
 |------|------|
-| What were we working on? | `context-mode__ctx_search(sort: "timeline")` |
+| What were we working on? | `context-mode__ctx_resume` |
+| … if `ctx_resume` reports no rows | `context-mode__ctx_search(sort: "timeline")` |
 | What did we decide? | `context-mode__ctx_search(queries: ["decision"], source: "decision")` |
 | What went wrong? | `context-mode__ctx_search(queries: ["error"], sort: "timeline")` |
 

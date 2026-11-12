@@ -147,6 +147,53 @@ function sessionId(input) {
   return `eca-pid-${process.ppid}`;
 }
 
+// ── ECA capability: _meta.sessionId ─────────────────────────────────
+//
+// ECA 0.171.0 started sending the chat id as _meta.sessionId on MCP
+// tools/call (#696), and 0.171.1 is the first release that also reports
+// eca_version in the hook payload (#697), so it is this last one the plugin
+// will detect. From 0.171.1 the context-mode server journals its
+// own calls under the same id the hooks use, so ctx_resume finds this
+// session's rows and v2's resume hint is correct as written. Before 0.171.1
+// the hint must be rewritten to another query that does work.
+// validated-versions.json carries the cutoff.
+
+function sessionIdSince() {
+  const data = readJsonFile(join(HERE, 'validated-versions.json'));
+  const value = data === null ? undefined : data.ecaSessionIdSince;
+  return typeof value === 'string' && value !== '' ? value : null;
+}
+
+function parseVersion(version) {
+  const m = /^(\d+)\.(\d+)\.(\d+)/.exec(String(version ?? ''));
+  return m === null ? null : [Number(m[1]), Number(m[2]), Number(m[3])];
+}
+
+// -1 / 0 / 1, or null when a side is not a plain x.y.z version.
+function compareVersions(a, b) {
+  const left = parseVersion(a);
+  const right = parseVersion(b);
+  if (left === null || right === null) return null;
+  for (let i = 0; i < 3; i++) {
+    if (left[i] !== right[i]) return left[i] < right[i] ? -1 : 1;
+  }
+  return 0;
+}
+
+// Whether ECA forwards the chat id as _meta.sessionId. A missing or
+// unparsable eca_version, or one below the cutoff, means "no" — the safe
+// answer, since it keeps the resume-hint rewrite. The env override lets
+// the self-check exercise both branches.
+function forwardsSessionId(input) {
+  const override = process.env.CONTEXT_MODE_ECA_SESSION_ID;
+  if (override === 'on' || override === '1') return true;
+  if (override === 'off' || override === '0') return false;
+  const since = sessionIdSince();
+  if (since === null) return false;
+  const order = compareVersions(input?.eca_version, since);
+  return order !== null && order >= 0;
+}
+
 // ── ECA tool names and inputs -> Claude shapes ──────────────────────
 
 const CM_PREFIX = 'mcp__plugin_context-mode_context-mode__';
@@ -347,21 +394,25 @@ const BARE_CTX_RE = new RegExp(
   'g',
 );
 
-// v2's SessionStart hint points at ctx_resume, which cannot see this
-// plugin's rows until ECA sends _meta.sessionId (see the README). Point
-// at the query that does work. Matches after the prefix rewrite above.
+// v2's SessionStart hint points at ctx_resume. That is right once ECA
+// forwards the chat id as _meta.sessionId, because context-mode then
+// journals under the id the hooks use; before that ctx_resume reports
+// no rows for this session, so point at the query that does work.
+// Matches after the prefix rewrite above.
 const RESUME_HINT_RE =
   /Call context-mode__ctx_resume for a summary of what happened\./g;
 const RESUME_HINT_FIX =
   'Run context-mode__ctx_search(sort: "timeline") to see what happened '
   + 'earlier.';
 
-function rewriteToolNames(text) {
-  return String(text)
+function rewriteToolNames(text, sessionIdForwarded) {
+  const out = String(text)
     .replace(CM_NAME_RE, 'context-mode__')
     .replace(CM_NAME_RE_UNDERSCORE, 'context-mode__')
-    .replace(BARE_CTX_RE, 'context-mode__ctx_$1')
-    .replace(RESUME_HINT_RE, RESUME_HINT_FIX);
+    .replace(BARE_CTX_RE, 'context-mode__ctx_$1');
+  return sessionIdForwarded
+    ? out
+    : out.replace(RESUME_HINT_RE, RESUME_HINT_FIX);
 }
 
 function nonEmptyString(value) {
@@ -395,7 +446,7 @@ function asText(value) {
   return jsonSafe(value);
 }
 
-function translateOutput(stdout) {
+function translateOutput(stdout, sessionIdForwarded) {
   const text = String(stdout ?? '').trim();
   if (text === '') return {};
   let data;
@@ -434,7 +485,7 @@ function translateOutput(stdout) {
   const out = {};
   const replacedText = replaced === undefined ? null : asText(replaced);
   if (replacedText !== null) {
-    out.replacedOutput = rewriteToolNames(replacedText);
+    out.replacedOutput = rewriteToolNames(replacedText, sessionIdForwarded);
   }
 
   const denied = decision === 'deny'
@@ -443,11 +494,13 @@ function translateOutput(stdout) {
   if (denied) {
     out.approval = 'deny';
     const why = reason ?? legacyReason ?? additional;
-    if (why !== undefined) out.additionalContext = rewriteToolNames(why);
+    if (why !== undefined) {
+      out.additionalContext = rewriteToolNames(why, sessionIdForwarded);
+    }
   } else {
     if (decision === 'ask') out.approval = 'ask';
     if (additional !== undefined) {
-      out.additionalContext = rewriteToolNames(additional);
+      out.additionalContext = rewriteToolNames(additional, sessionIdForwarded);
     }
   }
 
@@ -456,7 +509,7 @@ function translateOutput(stdout) {
   if (stopReason !== undefined) out.stopReason = stopReason;
   const systemMessage = nonEmptyString(data.systemMessage);
   if (systemMessage !== undefined) {
-    out.systemMessage = rewriteToolNames(systemMessage);
+    out.systemMessage = rewriteToolNames(systemMessage, sessionIdForwarded);
   }
   if (data.suppressOutput === true) out.suppressOutput = true;
   return out;
@@ -475,7 +528,7 @@ function translateOutput(stdout) {
 
 const SHELL_NETWORK_RE = /(?:^|[;&|(`\n])\s*(?:curl|wget)\b/;
 const CURL_TO_FILE_RE =
-  /\s(?:-o|--output|-O|--output-document)(?:\s|=)\S/;
+  /\s(?:-o|--output|-O|--output-document)[\s=]\S/;
 const CURL_QUIET_RE =
   /(?:^|\s)(?:-[A-Za-z]*[sq][A-Za-z]*|--silent|--quiet)(?=\s|$)/;
 const INLINE_HTTP_RE = new RegExp(
@@ -675,7 +728,7 @@ function decide(input, event, dir, policy, resolved) {
   const stdout = runHook(args, payload, dir);
   if (stdout === null) return {};
 
-  const out = translateOutput(stdout);
+  const out = translateOutput(stdout, forwardsSessionId(input));
   const isRead = String(input.tool_name ?? '') === 'read_file';
   if (policy !== 'trim' && isRead && event === 'posttoolcall') {
     delete out.replacedOutput;

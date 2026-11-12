@@ -61,11 +61,12 @@ Large searches →
 
 ## Tool selection
 
-0. **MEMORY** — after a resume or a compaction, check
-   `context-mode__ctx_search(sort: "timeline")` before asking the user
-   what you were doing. (The plugin injects the state block at
-   `postCompact`; `ctx_resume` and `scope: "session"` need the chat id on
-   the MCP call, which ECA does not send yet.)
+0. **MEMORY** — after a resume or a compaction, call
+   `context-mode__ctx_resume` for this session's state block before
+   asking the user what you were doing. If it reports no journal rows for
+   this session, the host does not forward the chat id; fall back to
+   `context-mode__ctx_search(sort: "timeline")`, which always works.
+   (The plugin injects the state block at `postCompact`.)
 1. **GATHER** — `context-mode__ctx_batch(commands, queries)`: run many
    commands, index the output, and get the matching sections in one call.
 2. **FOLLOW-UP** — `context-mode__ctx_search(queries: [...])`: batch every
@@ -80,11 +81,14 @@ Large searches →
 ## Session Continuity
 
 The plugin's hooks journal prompts, decisions, edits, commands and errors
-per session. On resume or after compaction, search before asking.
+per session. On resume or after compaction, prefer `ctx_resume` before
+asking; if it reports no rows for this session, use
+`ctx_search(sort: "timeline")`.
 
 | Need | Command |
 |------|---------|
-| What were we working on? | `context-mode__ctx_search(sort: "timeline")` |
+| What were we working on? | `context-mode__ctx_resume` |
+| … if `ctx_resume` reports no rows | `context-mode__ctx_search(sort: "timeline")` |
 | What did we decide? | `context-mode__ctx_search(queries: ["decision"], source: "decision")` |
 | What went wrong? | `context-mode__ctx_search(queries: ["error"], sort: "timeline")` |
 
