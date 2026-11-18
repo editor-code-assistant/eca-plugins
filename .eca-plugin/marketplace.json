@@ -169,6 +169,15 @@
       "author": "JUXT",
       "icon": "🧅",
       "featured": true
+    },
+    {
+      "name": "modern-web-guidance",
+      "description": "Search modern web platform guidance, scan for legacy patterns, and build Chrome extensions with two skills from Google Chrome",
+      "source": "plugins/modern-web-guidance",
+      "category": "Development",
+      "tags": ["web", "css", "javascript", "browser", "skill"],
+      "author": "Google Chrome",
+      "icon": "🌐"
     }
   ]
 }
