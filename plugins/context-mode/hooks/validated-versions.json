@@ -1,0 +1,17 @@
+{
+  "$comment": [
+    "context-mode major.minor versions the ECA adapter's self-check has",
+    "been run against. ctx-eca-adapter.mjs warns once at chatStart when",
+    "the installed version is outside this list; ctx-compat.mjs reports",
+    "it and validates a new release. Add a minor here after running",
+    "ctx-eca-adapter.test.mjs against that release.",
+    "",
+    "ecaSessionIdSince is the first ECA release that both sends the chat",
+    "id as _meta.sessionId on MCP tools/call and reports eca_version in",
+    "the hook payload, so it is the first the adapter can recognise. From",
+    "it the adapter leaves v2's ctx_resume hint alone; below it the hint",
+    "is rewritten to ctx_search(sort: \"timeline\")."
+  ],
+  "validated": ["1.0", "2.1"],
+  "ecaSessionIdSince": "0.171.1"
+}
