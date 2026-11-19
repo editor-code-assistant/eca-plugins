@@ -6,7 +6,7 @@
     "actions": [
       {
         "type": "shell",
-        "file": "scan-secrets.sh"
+        "file": "${plugin:root}/hooks/scan-secrets.sh"
       }
     ]
   }
