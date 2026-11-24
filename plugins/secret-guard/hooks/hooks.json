@@ -1,12 +1,13 @@
 {
   "secret-guard.scan": {
     "type": "preToolCall",
+    "description": "Asks before writing content that looks like a hardcoded secret",
     "matcher": "eca__write_file|eca__edit_file",
-    "visible": true,
+    "visible": false,
     "actions": [
       {
         "type": "shell",
-        "file": "scan-secrets.sh"
+        "file": "${plugin:root}/hooks/scan-secrets.sh"
       }
     ]
   }
