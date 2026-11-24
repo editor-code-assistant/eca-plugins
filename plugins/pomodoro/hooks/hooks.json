@@ -1,21 +1,12 @@
 {
-  "pomodoro.start": {
-    "type": "chatStart",
+  "pomodoro.check": {
+    "type": "postRequest",
+    "description": "Reminds you to take a break after 25 minutes of work",
     "visible": false,
     "actions": [
       {
         "type": "shell",
-        "shell": "date +%s > /tmp/eca-pomodoro-start"
-      }
-    ]
-  },
-  "pomodoro.check": {
-    "type": "postRequest",
-    "visible": true,
-    "actions": [
-      {
-        "type": "shell",
-        "file": "pomodoro-check.sh"
+        "file": "${plugin:root}/hooks/pomodoro-check.sh"
       }
     ]
   }

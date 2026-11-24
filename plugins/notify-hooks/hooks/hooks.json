@@ -1,16 +1,18 @@
 {
   "notify-hooks.finished": {
     "type": "postRequest",
+    "description": "Plays a sound when ECA finishes responding",
     "visible": false,
     "actions": [
       {
         "type": "shell",
-        "shell": "jq -e '.hook_type == \"postRequest\"' > /dev/null && (canberra-gtk-play -i complete 2>/dev/null || afplay /System/Library/Sounds/Glass.aiff 2>/dev/null || true)"
+        "shell": "cat > /dev/null; canberra-gtk-play -i complete 2>/dev/null || afplay /System/Library/Sounds/Glass.aiff 2>/dev/null || true"
       }
     ]
   },
   "notify-hooks.approval": {
     "type": "preToolCall",
+    "description": "Plays a sound when ECA needs your approval or asks you a question",
     "visible": false,
     "actions": [
       {

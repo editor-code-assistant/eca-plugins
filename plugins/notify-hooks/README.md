@@ -6,8 +6,8 @@ Desktop sound notifications for ECA events — never miss when ECA finishes or n
 
 Two hooks that play system sounds:
 
-- **`notify-finished`** — Plays a completion sound when ECA finishes responding (postRequest).
-- **`notify-approval`** — Plays a notification sound when ECA needs tool call approval (preToolCall).
+- **`notify-hooks.finished`** — Plays a completion sound when ECA finishes responding (`postRequest`).
+- **`notify-hooks.approval`** — Plays a notification sound when ECA needs your approval for a tool call, or asks you a question (`preToolCall`).
 
 ## Platform support
 
@@ -18,6 +18,6 @@ Two hooks that play system sounds:
 
 - **Linux:** `sudo apt install libcanberra-gtk3-module` (Debian/Ubuntu) or equivalent
 - **macOS:** No additional setup needed
-- **`jq`** must be installed for the approval notification filter
+- **`jq`**, for the approval sound only: it reads whether the tool call needs approval. The completion sound works without it.
 
 Credits: Based on the config shared by @ericdallo.

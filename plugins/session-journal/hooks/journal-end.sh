@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# chatEnd hook: ECA fires it when a chat is deleted, not when you stop using it.
 set -euo pipefail
 
 JOURNAL_DIR="${ECA_JOURNAL_DIR:-$HOME/.eca/journal}"
@@ -16,9 +17,8 @@ TODAY=$(date +%Y-%m-%d)
 TIME=$(date +%H:%M:%S)
 
 cat >> "$JOURNAL_DIR/$TODAY.md" <<EOF
-### Session ended at $TIME
+### Chat deleted at $TIME
 - **Chat:** $CHAT_ID
----
 
 EOF
 

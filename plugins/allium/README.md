@@ -66,6 +66,8 @@ Each agent is the non-interactive entry point for its skill: it reads the skill,
 | `allium.loop-trace-pre` | ECA `spawn_agent` (before) | Stamps each subagent call's start while an Allium loop is active (a `.allium-loop/` dir exists); no-op otherwise |
 | `allium.loop-trace-post` | ECA `spawn_agent` (after) | Writes `{agent, duration_ms}` to `.allium-loop/timings.jsonl` on return — deterministic per-phase timing the loop folds into its trace and report |
 
+The hooks are Node.js scripts, so they need `node` on your `PATH`. Without it they can't run: `allium.check-spec` shows a failed hook after each `.allium` edit, and the loop-trace hooks fail silently, so loop timings aren't recorded. The skills, agents and rules don't need Node.js.
+
 ### References (10 + schemas)
 
 Full language reference, 9 worked patterns, test generation taxonomy, the Allium loop (recommended loops, the loop-driving procedure, and slice integration for fanned-out goals), migration guides, skill-specific examples, and the JSON schemas for the loop's typed hand-offs (`references/schemas/` — per-phase result records, the ledger, and trace entries).

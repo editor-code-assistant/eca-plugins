@@ -1,21 +1,34 @@
 {
   "session-journal.start": {
     "type": "chatStart",
+    "description": "Logs when a chat starts or is resumed",
     "visible": false,
     "actions": [
       {
         "type": "shell",
-        "file": "journal-start.sh"
+        "file": "${plugin:root}/hooks/journal-start.sh"
       }
     ]
   },
   "session-journal.end": {
     "type": "chatEnd",
+    "description": "Logs when a chat is deleted",
     "visible": false,
     "actions": [
       {
         "type": "shell",
-        "file": "journal-end.sh"
+        "file": "${plugin:root}/hooks/journal-end.sh"
+      }
+    ]
+  },
+  "session-journal.session-end": {
+    "type": "sessionEnd",
+    "description": "Logs when ECA shuts down",
+    "visible": false,
+    "actions": [
+      {
+        "type": "shell",
+        "file": "${plugin:root}/hooks/journal-session-end.sh"
       }
     ]
   }
