@@ -102,6 +102,42 @@ if (fs.existsSync(hooksDir)) {
 }
 const hasHooks = hooksJsonHtml || hookScripts.length > 0;
 
+// Modules: discovered like ECA does. modules/*.clj and *.cljc are file
+// modules; a modules/<folder>/ with a module.clj is a folder module, shown
+// with its other namespaces. Hidden entries are skipped.
+const modulesDir = path.join(pluginDir, 'modules');
+const moduleFiles: PluginFile[] = [];
+if (fs.existsSync(modulesDir)) {
+  const isClojure = (file: string) => file.endsWith('.clj') || file.endsWith('.cljc');
+  const isHidden = (file: string) => file.split(path.sep).some((part) => part.startsWith('.'));
+  const entries = fs
+    .readdirSync(modulesDir, { withFileTypes: true })
+    .filter((entry) => !entry.name.startsWith('.'))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  for (const entry of entries) {
+    let files: string[] = [];
+    if (entry.isDirectory()) {
+      const folder = path.join(modulesDir, entry.name);
+      if (fs.existsSync(path.join(folder, 'module.clj'))) {
+        const others = fs
+          .readdirSync(folder, { recursive: true, encoding: 'utf-8' })
+          .filter((file) => isClojure(file) && !isHidden(file) && file !== 'module.clj')
+          .sort();
+        files = ['module.clj', ...others].map((file) => path.join(entry.name, file));
+      }
+    } else if (entry.isFile() && isClojure(entry.name)) {
+      files = [entry.name];
+    }
+    for (const file of files) {
+      const filename = `modules/${file.split(path.sep).join('/')}`;
+      moduleFiles.push({
+        filename,
+        html: await highlightCode(fs.readFileSync(path.join(modulesDir, file), 'utf-8'), filename),
+      });
+    }
+  }
+}
+
 // Build tabs array
 interface Tab {
   id: string;
@@ -113,6 +149,7 @@ if (skills.length > 0) tabs.push({ id: 'skills', label: 'Skills' });
 if (agents.length > 0) tabs.push({ id: 'agents', label: 'Agents' });
 if (rules.length > 0) tabs.push({ id: 'rules', label: 'Rules' });
 if (hasHooks) tabs.push({ id: 'hooks', label: 'Hooks' });
+if (moduleFiles.length > 0) tabs.push({ id: 'modules', label: 'Modules' });
 
 const installCommand = `/plugin-install ${plugin.name}`;
 const configSnippet = `{
@@ -270,6 +307,26 @@ const configSnippet = `{
                       <code class="detail-file-name">{script.filename}</code>
                     </div>
                     <div class="detail-code-block" set:html={script.html} />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Modules Panel */}
+            {moduleFiles.length > 0 && (
+              <div
+                id="panel-modules"
+                role="tabpanel"
+                class="detail-tab-panel"
+                data-panel="modules"
+                hidden
+              >
+                {moduleFiles.map((file) => (
+                  <div class="detail-file-section">
+                    <div class="detail-file-bar">
+                      <code class="detail-file-name">{file.filename}</code>
+                    </div>
+                    <div class="detail-code-block" set:html={file.html} />
                   </div>
                 ))}
               </div>

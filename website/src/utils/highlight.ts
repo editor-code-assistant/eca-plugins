@@ -6,7 +6,7 @@ async function getHighlighter(): Promise<Highlighter> {
   if (!highlighter) {
     highlighter = await createHighlighter({
       themes: ['github-dark-dimmed'],
-      langs: ['markdown', 'json', 'shellscript'],
+      langs: ['markdown', 'json', 'shellscript', 'clojure'],
     });
   }
   return highlighter;
@@ -16,6 +16,8 @@ const extToLang: Record<string, string> = {
   '.md': 'markdown',
   '.json': 'json',
   '.sh': 'shellscript',
+  '.clj': 'clojure',
+  '.cljc': 'clojure',
 };
 
 /** Highlight source code, returning an HTML string. */
