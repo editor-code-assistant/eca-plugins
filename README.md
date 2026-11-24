@@ -6,7 +6,7 @@ The official plugin marketplace for [ECA](https://eca.dev) — browse, discover,
 
 ## Requirements
 
-Some hook-based plugins (e.g., `secret-guard`, `notify-hooks`, `session-journal`) require [`jq`](https://jqlang.github.io/jq/) to be installed and available on your `PATH`.
+Some hook-based plugins (e.g., `notify-hooks`, `session-journal`, and `secret-guard` on ECA versions before 0.172.0) require [`jq`](https://jqlang.github.io/jq/) to be installed and available on your `PATH`.
 
 ## What is this?
 
@@ -36,7 +36,7 @@ We welcome community contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for t
 In short:
 
 1. Create a directory under `plugins/your-plugin-name/`
-2. Add your plugin components (skills, agents, rules, commands, hooks, MCP servers, config)
+2. Add your plugin components (skills, agents, rules, commands, hooks, MCP servers, modules, config)
 3. Add an entry to `.eca-plugin/marketplace.json`
 4. Open a pull request
 
